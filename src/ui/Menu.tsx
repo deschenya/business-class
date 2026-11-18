@@ -7,7 +7,6 @@ export function Menu() {
   const [lan, setLan] = useState(false);
   useEffect(() => { hasLanServer().then(setLan); }, []);
   const [list, setList] = useState(saves.list());
-  const last = list[0];
   const open = async (id: string, asHost = false) => {
     const s = saves.get(id);
     if (!s) return toast('Сохранение повреждено', 'bad');
@@ -22,10 +21,8 @@ export function Menu() {
       <div className="menu-left">
         <img className="menu-logo" src="art/logo.webp" alt="Бизнес-класс!!!" />
         <div className="menu-buttons">
-          {last && <button className="btn gold big" onClick={() => open(last.id)}>Продолжить «{last.title}»</button>}
-          <button className={`btn big ${last ? '' : 'gold'}`} onClick={() => setScreen('setup')}>Новая партия</button>
-          <button className="btn big" onClick={() => setScreen('join')}>Присоединиться к другу</button>
-          {room && <button className="btn" disabled={net.status === 'connecting'} onClick={() => { setScreen('join'); join(room.code, room.kind, room.server, room.name); }}>↻ Вернуться в комнату {room.code}</button>}
+          <button className="btn gold big" onClick={() => setScreen('setup')}>Начать партию</button>
+          <button className="btn big" onClick={() => setScreen('join')}>Присоединиться</button>
         </div>
         <div className="menu-links">
           <button className="menu-link" onClick={() => setScreen('rules')}><span>📖</span>Правила и словарь</button>
@@ -35,25 +32,36 @@ export function Menu() {
       {net.mode === 'host' && net.status === 'connecting' && (
         <div className="reconnect-back"><div className="reconnect glass"><span className="spinner" /><h3>Открываем комнату {net.code}</h3><p className="muted">{net.error ?? 'Подключаемся к серверу соединения…'}</p><button className="btn ghost" onClick={() => leave()}>Отмена</button></div></div>
       )}
-      <aside className="menu-right glass">
-        <div className="saves-head">
+      {(list.length > 0 || room) && (
+        <aside className="menu-right glass">
           <h2>Мои партии</h2>
-        </div>
-        {list.length === 0 && <p className="muted small">Пока нет сохранённых партий. Партия сохраняется автоматически после каждого действия.</p>}
-        <div className="saves-list">
-          {list.map((m) => (
-            <div key={m.id} className="save-row" title="Продолжить на этом устройстве" onClick={() => open(m.id)}>
-              <div className="save-main">
-                <b>{m.title}</b>
-                <span className="muted small">{m.players.join(', ')}</span>
-                <span className="muted small">ход {m.turn} · {new Date(m.updatedAt).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
+          <div className="saves-list">
+            {room && (
+              <div className="save-row room" onClick={() => { if (net.status !== 'connecting') { setScreen('join'); join(room.code, room.kind, room.server, room.name); } }}>
+                <div className="save-main">
+                  <b>Сетевая партия · комната {room.code}</b>
+                  <span className="muted small">вы играли как «{room.name}» — вернуться за свою фишку</span>
+                </div>
+                <span className="save-go">↻ Вернуться</span>
               </div>
-              <button className="btn sm" title="Продолжить как хост — друзья подключатся по ссылке" onClick={(e) => { e.stopPropagation(); open(m.id, true); }}>🌐 Хост</button>
-              <button className="icon-btn" title="Удалить" onClick={(e) => { e.stopPropagation(); if (confirm(`Удалить сохранение «${m.title}»?`)) { saves.remove(m.id); setList(saves.list()); } }}>✕</button>
-            </div>
-          ))}
-        </div>
-      </aside>
+            )}
+            {list.map((m) => (
+              <div key={m.id} className="save-row" onClick={() => open(m.id)}>
+                <div className="save-main">
+                  <b>{m.title}</b>
+                  <span className="muted small">{m.players.join(', ')}</span>
+                  <span className="muted small">ход {m.turn} · {new Date(m.updatedAt).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
+                </div>
+                <div className="save-actions">
+                  <span className="save-go" title="Продолжить на этом устройстве">▶ Играть</span>
+                  <button className="btn sm" title="Продолжить по сети: друзья подключатся по ссылке" onClick={(e) => { e.stopPropagation(); open(m.id, true); }}>🌐 Хост</button>
+                  <button className="icon-btn" title="Удалить" onClick={(e) => { e.stopPropagation(); if (confirm(`Удалить сохранение «${m.title}»?`)) { saves.remove(m.id); setList(saves.list()); } }}>✕</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </aside>
+      )}
     </div>
   );
 }
