@@ -1,0 +1,66 @@
+{
+ "_описание": "Колоды карточек. Тексты перенесены дословно с изображений Resources/04–07. effect — машинное действие; карты с требует_оцифровки исполняет ведущий вручную.",
+ "decks": {
+  "notice": { "name": "Извещение", "back": "res/cards/notice/back.webp", "cards": [
+   { "id": "notice-1", "image": "res/cards/notice/01.webp", "text": "Почтовое извещение: получите посылку или поменяйте ее на дополнительный ход. Выбор за Вами",
+     "effect": { "kind": "choice", "options": [
+       { "label": "Получить посылку", "effect": { "kind": "manual", "требует_оцифровки": "содержимое посылки на карточке не указано — ведущий вносит сумму/предмет" } },
+       { "label": "Дополнительный ход", "effect": { "kind": "extraTurn" } } ] } },
+   { "id": "notice-2", "image": "res/cards/notice/02.webp", "text": "Радостное известие: партнеры решили презентовать Вам машину, квартиру и дачу, Но плохо то, что не сейчас", "effect": { "kind": "none" } },
+   { "id": "notice-3", "image": "res/cards/notice/03.webp", "text": "Ваши партнеры по бизнесу шлют Вам привет, наилучшие пожелания, но ничего материального", "effect": { "kind": "none" } },
+   { "id": "notice-4", "image": "res/cards/notice/04.webp", "text": "На Ваше имя пришло извещение о том, что игрок напротив следующий бросок совершает одним кубиком. Передавайте ему привет", "effect": { "kind": "oneDieNext", "target": "opposite" } },
+   { "id": "notice-5", "image": "res/cards/notice/05.webp", "text": "БАНК выдает Вам 10 000, которые Вы как добрый человек по своему усмотрению распределяете между другими игроками", "effect": { "kind": "distribute", "amount": 10000 } }
+  ]},
+  "gift": { "name": "Подарок", "back": "res/cards/gift/back.webp", "cards": [
+   { "id": "gift-1", "image": "res/cards/gift/01.webp", "text": "Подарите партнерам свою очаровательную улыбку, а они подарят Вам по 5 000", "effect": { "kind": "collectFromEach", "amount": 5000 } },
+   { "id": "gift-2", "image": "res/cards/gift/02.webp", "text": "Игрок, сидящий напротив, не берет с Вас плату за аренду одного из его филиалов (предприятий)", "effect": { "kind": "rentWaiver", "target": "opposite" } },
+   { "id": "gift-3", "image": "res/cards/gift/03.webp", "text": "Выбранный Вами игрок дарит Вам улыбку и одну акцию красного цвета", "effect": { "kind": "takeStock", "target": "chosen", "color": "red", "count": 1 } },
+   { "id": "gift-4", "image": "res/cards/gift/04.webp", "text": "Мы рады, что Вы сейчас с нами. От нашего имени БАНК дарит Вам 10000", "effect": { "kind": "money", "amount": 10000 } },
+   { "id": "gift-5", "image": "res/cards/gift/05.webp", "text": "Как подарок: следующий за Вами игрок пропускает ход", "effect": { "kind": "skipTurn", "target": "next" } }
+  ]},
+  "surprise": { "name": "Сюрприз", "back": "res/cards/surprise/back.webp", "cards": [
+   { "id": "surprise-1", "image": "res/cards/surprise/01.webp", "text": "Сюрпризы особенно любят дамы. Если среди игроков есть дама, то уступите ей за полцены один из своих филиалов", "effect": { "kind": "sellBranchToLady" } },
+   { "id": "surprise-2", "image": "res/cards/surprise/02.webp", "text": "Приятно делать сюрпризы! Улыбнитесь Вашему соседу справа и подарите ему одну свою акцию", "effect": { "kind": "giveStock", "target": "right", "count": 1 } },
+   { "id": "surprise-3", "image": "res/cards/surprise/03.webp", "text": "Вам звонила мама: она задерживается и просила Вас пропустить следующий ход, чтобы увидеться с Вами до отъезда", "effect": { "kind": "skipTurn", "target": "self" } },
+   { "id": "surprise-4", "image": "res/cards/surprise/04.webp", "text": "Сюрприз от БАНКА: Вам разрешено поменять одну из Ваших акций на другую любого цвета", "effect": { "kind": "swapStock" } },
+   { "id": "surprise-5", "image": "res/cards/surprise/05.webp", "text": "Сюрпризы бывают разные: Вам разрешают сделать еще один ход, но бросок совершите только одним кубиком левой рукой", "effect": { "kind": "extraTurn", "oneDie": true } }
+  ]},
+  "fine": { "name": "Штраф", "back": "res/cards/fine/back.webp", "cards": [
+   { "id": "fine-1", "image": "res/cards/fine/01.webp", "text": "Мы слышали что Вы неправильно переходили дорогу. ГИБДД с Вас взыскивает 5000 в доход государства через БАНК", "effect": { "kind": "money", "amount": -5000 } },
+   { "id": "fine-2", "image": "res/cards/fine/02.webp", "text": "За распитие спиртных напитков мы Вас не арестуем, но заплатите штраф в БАНК 10 000", "effect": { "kind": "money", "amount": -10000 } },
+   { "id": "fine-3", "image": "res/cards/fine/03.webp", "text": "Так как Вы сегодня плохо выбриты, не пожалейте соседу справа 5000", "effect": { "kind": "payTo", "target": "right", "amount": 5000 } },
+   { "id": "fine-4", "image": "res/cards/fine/04.webp", "text": "Штраф — это не смертельно! На первый раз за нарушение таможенного законодательства штрафуем Вас всего на 5000", "effect": { "kind": "money", "amount": -5000 } },
+   { "id": "fine-5", "image": "res/cards/fine/05.webp", "text": "В следующий раз налоги надо платить вовремя. Будьте добры уплатить штраф в размере 15000", "effect": { "kind": "money", "amount": -15000 } }
+  ]},
+  "exchange": { "name": "Биржевые карточки", "back": "art/exchange_back.webp", "cards": [
+   {"id":"ex-green-1","image":"res/exchange/green_01.webp","color":"green","text":"зелёный: :2","effect":{"op":"div","value":2,"color":"green"}},
+   {"id":"ex-green-2","image":"res/exchange/green_02.webp","color":"green","text":"зелёный: −10 пунктов","effect":{"op":"add","value":-10,"color":"green"}},
+   {"id":"ex-green-3","image":"res/exchange/green_03.webp","color":"green","text":"зелёный: +10 пунктов","effect":{"op":"add","value":10,"color":"green"}},
+   {"id":"ex-green-4","image":"res/exchange/green_04.webp","color":"green","text":"зелёный: −5 пунктов","effect":{"op":"add","value":-5,"color":"green"}},
+   {"id":"ex-green-5","image":"res/exchange/green_05.webp","color":"green","text":"зелёный: +5 пунктов; остальные цвета: −5 пунктов","effect":{"op":"addOthers","value":5,"others":-5,"color":"green"}},
+   {"id":"ex-green-6","image":"res/exchange/green_06.webp","color":"green","text":"зелёный: ×2","effect":{"op":"mul","value":2,"color":"green"}},
+   {"id":"ex-yellow-1","image":"res/exchange/yellow_01.webp","color":"yellow","text":"жёлтый: :2","effect":{"op":"div","value":2,"color":"yellow"}},
+   {"id":"ex-yellow-2","image":"res/exchange/yellow_02.webp","color":"yellow","text":"жёлтый: −10 пунктов","effect":{"op":"add","value":-10,"color":"yellow"}},
+   {"id":"ex-yellow-3","image":"res/exchange/yellow_03.webp","color":"yellow","text":"жёлтый: +10 пунктов","effect":{"op":"add","value":10,"color":"yellow"}},
+   {"id":"ex-yellow-4","image":"res/exchange/yellow_04.webp","color":"yellow","text":"жёлтый: −5 пунктов","effect":{"op":"add","value":-5,"color":"yellow"}},
+   {"id":"ex-yellow-5","image":"res/exchange/yellow_05.webp","color":"yellow","text":"жёлтый: +5 пунктов; остальные цвета: −5 пунктов","effect":{"op":"addOthers","value":5,"others":-5,"color":"yellow"}},
+   {"id":"ex-yellow-6","image":"res/exchange/yellow_06.webp","color":"yellow","text":"жёлтый: ×2","effect":{"op":"mul","value":2,"color":"yellow"}},
+   {"id":"ex-blue-1","image":"res/exchange/blue_01.webp","color":"blue","text":"синий: :2","effect":{"op":"div","value":2,"color":"blue"}},
+   {"id":"ex-blue-2","image":"res/exchange/blue_02.webp","color":"blue","text":"синий: −10 пунктов","effect":{"op":"add","value":-10,"color":"blue"}},
+   {"id":"ex-blue-3","image":"res/exchange/blue_03.webp","color":"blue","text":"синий: +10 пунктов","effect":{"op":"add","value":10,"color":"blue"}},
+   {"id":"ex-blue-4","image":"res/exchange/blue_04.webp","color":"blue","text":"синий: −5 пунктов","effect":{"op":"add","value":-5,"color":"blue"}},
+   {"id":"ex-blue-5","image":"res/exchange/blue_05.webp","color":"blue","text":"синий: +5 пунктов; остальные цвета: −5 пунктов","effect":{"op":"addOthers","value":5,"others":-5,"color":"blue"}},
+   {"id":"ex-blue-6","image":"res/exchange/blue_06.webp","color":"blue","text":"синий: ×2","effect":{"op":"mul","value":2,"color":"blue"}},
+   {"id":"ex-red-1","image":"res/exchange/red_01.webp","color":"red","text":"красный: :2","effect":{"op":"div","value":2,"color":"red"}},
+   {"id":"ex-red-2","image":"res/exchange/red_02.webp","color":"red","text":"красный: −10 пунктов","effect":{"op":"add","value":-10,"color":"red"}},
+   {"id":"ex-red-3","image":"res/exchange/red_03.webp","color":"red","text":"красный: +10 пунктов","effect":{"op":"add","value":10,"color":"red"}},
+   {"id":"ex-red-4","image":"res/exchange/red_04.webp","color":"red","text":"красный: −5 пунктов","effect":{"op":"add","value":-5,"color":"red"}},
+   {"id":"ex-red-5","image":"res/exchange/red_05.webp","color":"red","text":"красный: +5 пунктов; остальные цвета: −5 пунктов","effect":{"op":"addOthers","value":5,"others":-5,"color":"red"}},
+   {"id":"ex-red-6","image":"res/exchange/red_06.webp","color":"red","text":"красный: ×2","effect":{"op":"mul","value":2,"color":"red"}},
+   {"id":"ex-white-1","image":"res/exchange/white_01.webp","color":"white","text":":2, выбрать цвет","effect":{"op":"div","value":2,"choose":true}},
+   {"id":"ex-white-2","image":"res/exchange/white_02.webp","color":"white","text":"−1, −2, −3, +3 пункта; выбрать цвета","effect":{"op":"assign","values":[-1,-2,-3,3]}},
+   {"id":"ex-white-3","image":"res/exchange/white_03.webp","color":"white","text":"−5, +5 пунктов; выбрать цвета","effect":{"op":"assign","values":[-5,5]}},
+   {"id":"ex-white-4","image":"res/exchange/white_04.webp","color":"white","text":"×2, выбрать цвет","effect":{"op":"mul","value":2,"choose":true}}
+  ]}
+ }
+}

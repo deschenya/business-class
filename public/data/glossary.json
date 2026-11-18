@@ -1,0 +1,261 @@
+{
+ "_описание": "«Словарь делового человека» из буклета. Носит справочный характер и не вводит игровых правил. Определения — на сканах страниц 8–11.",
+ "terms": [
+  {
+   "term": "агент",
+   "definition": null
+  },
+  {
+   "term": "аккредитив",
+   "definition": null
+  },
+  {
+   "term": "акциз",
+   "definition": null
+  },
+  {
+   "term": "акционер",
+   "definition": null
+  },
+  {
+   "term": "акционерное общество",
+   "definition": null
+  },
+  {
+   "term": "акция",
+   "definition": null
+  },
+  {
+   "term": "амортизация",
+   "definition": null
+  },
+  {
+   "term": "андеррайтер",
+   "definition": null
+  },
+  {
+   "term": "антимонопольное законодательство",
+   "definition": null
+  },
+  {
+   "term": "арбитраж",
+   "definition": null
+  },
+  {
+   "term": "аренда",
+   "definition": null
+  },
+  {
+   "term": "ассортимент",
+   "definition": null
+  },
+  {
+   "term": "ассоциация",
+   "definition": null
+  },
+  {
+   "term": "аудитор",
+   "definition": null
+  },
+  {
+   "term": "аукцион",
+   "definition": null
+  },
+  {
+   "term": "баланс платёжный",
+   "definition": null
+  },
+  {
+   "term": "банк",
+   "definition": null
+  },
+  {
+   "term": "банкрот",
+   "definition": null
+  },
+  {
+   "term": "бизнес",
+   "definition": null
+  },
+  {
+   "term": "биржа",
+   "definition": null
+  },
+  {
+   "term": "бонус",
+   "definition": null
+  },
+  {
+   "term": "брокер",
+   "definition": null
+  },
+  {
+   "term": "бюджет",
+   "definition": null
+  },
+  {
+   "term": "валюта",
+   "definition": null
+  },
+  {
+   "term": "валютный курс",
+   "definition": null
+  },
+  {
+   "term": "вексель",
+   "definition": null
+  },
+  {
+   "term": "дебитор",
+   "definition": null
+  },
+  {
+   "term": "девальвация",
+   "definition": null
+  },
+  {
+   "term": "декларация",
+   "definition": null
+  },
+  {
+   "term": "демпинг",
+   "definition": null
+  },
+  {
+   "term": "депозит",
+   "definition": null
+  },
+  {
+   "term": "товарный дефицит",
+   "definition": null
+  },
+  {
+   "term": "дивиденд",
+   "definition": null
+  },
+  {
+   "term": "дилер",
+   "definition": null
+  },
+  {
+   "term": "доходы",
+   "definition": null
+  },
+  {
+   "term": "дебиторская задолженность",
+   "definition": null
+  },
+  {
+   "term": "имидж",
+   "definition": null
+  },
+  {
+   "term": "импорт",
+   "definition": null
+  },
+  {
+   "term": "инвестиции",
+   "definition": null
+  },
+  {
+   "term": "инфляция",
+   "definition": null
+  },
+  {
+   "term": "клиринг",
+   "definition": null
+  },
+  {
+   "term": "конверсия",
+   "definition": null
+  },
+  {
+   "term": "конкуренция",
+   "definition": null
+  },
+  {
+   "term": "контракт",
+   "definition": null
+  },
+  {
+   "term": "котировка",
+   "definition": null
+  },
+  {
+   "term": "кредит",
+   "definition": null
+  },
+  {
+   "term": "курс",
+   "definition": null
+  },
+  {
+   "term": "ликвидность",
+   "definition": null
+  },
+  {
+   "term": "ЛТД",
+   "definition": null
+  },
+  {
+   "term": "маклер",
+   "definition": null
+  },
+  {
+   "term": "налог",
+   "definition": null
+  },
+  {
+   "term": "оферта",
+   "definition": null
+  },
+  {
+   "term": "прибыль",
+   "definition": null
+  },
+  {
+   "term": "бартерная сделка",
+   "definition": null
+  },
+  {
+   "term": "себестоимость",
+   "definition": null
+  },
+  {
+   "term": "скидка",
+   "definition": null
+  },
+  {
+   "term": "торги",
+   "definition": null
+  },
+  {
+   "term": "форс-мажор",
+   "definition": null
+  },
+  {
+   "term": "штраф",
+   "definition": null
+  },
+  {
+   "term": "экспорт",
+   "definition": null
+  }
+ ],
+ "pages": [
+  "res/rules/page-08.webp",
+  "res/rules/page-09.webp",
+  "res/rules/page-10.webp",
+  "res/rules/page-11.webp"
+ ],
+ "rulesPages": [
+  "res/rules/page-01-cover.webp",
+  "res/rules/page-02.webp",
+  "res/rules/page-03.webp",
+  "res/rules/page-04.webp",
+  "res/rules/page-05.webp",
+  "res/rules/page-06.webp",
+  "res/rules/page-07.webp",
+  "res/rules/page-12-back.webp"
+ ]
+}

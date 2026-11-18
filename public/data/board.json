@@ -1,0 +1,1587 @@
+{
+ "_описание": "Справочник поля «Бизнес-класс!!!», оцифрован по Map2K.jpg (2048×2048). Координаты xy — пиксели изображения поля. Поля «проверить» и «требует_оцифровки» показывают сомнительные/неизвестные значения.",
+ "image": "res/board.jpg",
+ "size": 2048,
+ "cells": [
+  {
+   "id": 0,
+   "zone": "outer",
+   "type": "start",
+   "name": "Старт",
+   "bonusPass": 20000,
+   "xy": [
+    122,
+    1926
+   ]
+  },
+  {
+   "id": 1,
+   "zone": "outer",
+   "type": "company",
+   "name": "Puma",
+   "color": "red",
+   "quote": 25000,
+   "rent": {
+    "plot": 6000,
+    "branch": 12000,
+    "enterprise": 16000
+   },
+   "price": 20000,
+   "xy": [
+    122,
+    1717
+   ]
+  },
+  {
+   "id": 2,
+   "zone": "outer",
+   "type": "win",
+   "name": "Выигрыш",
+   "amount": 40000,
+   "xy": [
+    122,
+    1544
+   ]
+  },
+  {
+   "id": 3,
+   "zone": "outer",
+   "type": "company",
+   "name": "Nike",
+   "color": "red",
+   "quote": 40000,
+   "rent": {
+    "plot": 6000,
+    "branch": 14000,
+    "enterprise": 36000
+   },
+   "price": 50000,
+   "xy": [
+    122,
+    1371
+   ]
+  },
+  {
+   "id": 4,
+   "zone": "outer",
+   "type": "card",
+   "name": "Извещение",
+   "deck": "notice",
+   "xy": [
+    122,
+    1197
+   ]
+  },
+  {
+   "id": 5,
+   "zone": "outer",
+   "type": "company",
+   "name": "Adidas",
+   "color": "red",
+   "quote": 35000,
+   "rent": {
+    "plot": 10000,
+    "branch": 14000,
+    "enterprise": 22000
+   },
+   "price": 30000,
+   "xy": [
+    122,
+    1024
+   ]
+  },
+  {
+   "id": 6,
+   "zone": "outer",
+   "type": "company",
+   "name": "Intel",
+   "color": "yellow",
+   "quote": 30000,
+   "rent": {
+    "plot": 8000,
+    "branch": 10000,
+    "enterprise": 18000
+   },
+   "price": 26000,
+   "xy": [
+    122,
+    851
+   ]
+  },
+  {
+   "id": 7,
+   "zone": "outer",
+   "type": "card",
+   "name": "Сюрприз",
+   "deck": "surprise",
+   "xy": [
+    122,
+    677
+   ]
+  },
+  {
+   "id": 8,
+   "zone": "outer",
+   "type": "company",
+   "name": "Apple",
+   "color": "yellow",
+   "quote": 40000,
+   "rent": {
+    "plot": 8000,
+    "branch": 16000,
+    "enterprise": 38000
+   },
+   "price": 50000,
+   "xy": [
+    122,
+    504
+   ]
+  },
+  {
+   "id": 9,
+   "zone": "outer",
+   "type": "company",
+   "name": "IBM",
+   "color": "yellow",
+   "quote": 80000,
+   "rent": {
+    "plot": 6000,
+    "branch": 12000,
+    "enterprise": 78000
+   },
+   "price": 90000,
+   "проверить": "аренда предприятия читается как 78 000 (возможно 28 000)",
+   "xy": [
+    122,
+    331
+   ]
+  },
+  {
+   "id": 10,
+   "zone": "outer",
+   "type": "exchange_gate",
+   "name": "Биржа",
+   "xy": [
+    122,
+    122
+   ]
+  },
+  {
+   "id": 11,
+   "zone": "outer",
+   "type": "company",
+   "name": "Дэу",
+   "color": "blue",
+   "quote": 25000,
+   "rent": {
+    "plot": 6000,
+    "branch": 12000,
+    "enterprise": 28000
+   },
+   "price": 30000,
+   "xy": [
+    331,
+    122
+   ]
+  },
+  {
+   "id": 12,
+   "zone": "outer",
+   "type": "card",
+   "name": "Подарок",
+   "deck": "gift",
+   "xy": [
+    504,
+    122
+   ]
+  },
+  {
+   "id": 13,
+   "zone": "outer",
+   "type": "company",
+   "name": "Samsung",
+   "color": "blue",
+   "quote": 40000,
+   "rent": {
+    "plot": 8000,
+    "branch": 18000,
+    "enterprise": 22000
+   },
+   "price": 36000,
+   "проверить": "аренда филиала читается как 18 000 (возможно 16 000)",
+   "xy": [
+    677,
+    122
+   ]
+  },
+  {
+   "id": 14,
+   "zone": "outer",
+   "type": "card",
+   "name": "Сюрприз",
+   "deck": "surprise",
+   "xy": [
+    851,
+    122
+   ]
+  },
+  {
+   "id": 15,
+   "zone": "outer",
+   "type": "company",
+   "name": "Кодак",
+   "color": "blue",
+   "quote": 35000,
+   "rent": {
+    "plot": 8000,
+    "branch": 10000,
+    "enterprise": 16000
+   },
+   "price": 20000,
+   "xy": [
+    1024,
+    122
+   ]
+  },
+  {
+   "id": 16,
+   "zone": "outer",
+   "type": "company",
+   "name": "Тойота",
+   "color": "green",
+   "quote": 80000,
+   "rent": {
+    "plot": 10000,
+    "branch": 20000,
+    "enterprise": 40000
+   },
+   "price": 60000,
+   "xy": [
+    1197,
+    122
+   ]
+  },
+  {
+   "id": 17,
+   "zone": "outer",
+   "type": "card",
+   "name": "Извещение",
+   "deck": "notice",
+   "xy": [
+    1371,
+    122
+   ]
+  },
+  {
+   "id": 18,
+   "zone": "outer",
+   "type": "company",
+   "name": "Хонда",
+   "color": "green",
+   "quote": 70000,
+   "rent": {
+    "plot": 10000,
+    "branch": 16000,
+    "enterprise": 36000
+   },
+   "price": 60000,
+   "xy": [
+    1544,
+    122
+   ]
+  },
+  {
+   "id": 19,
+   "zone": "outer",
+   "type": "company",
+   "name": "Мазда",
+   "color": "green",
+   "quote": 50000,
+   "rent": {
+    "plot": 8000,
+    "branch": 12000,
+    "enterprise": 28000
+   },
+   "price": 50000,
+   "xy": [
+    1717,
+    122
+   ]
+  },
+  {
+   "id": 20,
+   "zone": "outer",
+   "type": "broker",
+   "name": "Маклер",
+   "exchangeFee": 5000,
+   "xy": [
+    1926,
+    122
+   ]
+  },
+  {
+   "id": 21,
+   "zone": "outer",
+   "type": "company",
+   "name": "Lancôme",
+   "color": "red",
+   "quote": 50000,
+   "rent": {
+    "plot": 6000,
+    "branch": 8000,
+    "enterprise": 18000
+   },
+   "price": 20000,
+   "xy": [
+    1926,
+    331
+   ]
+  },
+  {
+   "id": 22,
+   "zone": "outer",
+   "type": "company",
+   "name": "Schwarzkopf & Henkel",
+   "color": "red",
+   "quote": 25000,
+   "rent": {
+    "plot": 4000,
+    "branch": 8000,
+    "enterprise": 10000
+   },
+   "price": 12000,
+   "xy": [
+    1926,
+    504
+   ]
+  },
+  {
+   "id": 23,
+   "zone": "outer",
+   "type": "card",
+   "name": "Штраф",
+   "deck": "fine",
+   "xy": [
+    1926,
+    677
+   ]
+  },
+  {
+   "id": 24,
+   "zone": "outer",
+   "type": "bank",
+   "name": "Банк",
+   "premium": 50000,
+   "transferFee": 25000,
+   "twin": 52,
+   "xy": [
+    1926,
+    851
+   ]
+  },
+  {
+   "id": 25,
+   "zone": "outer",
+   "type": "company",
+   "name": "Орифлейм",
+   "color": "red",
+   "quote": 25000,
+   "rent": {
+    "plot": 8000,
+    "branch": 18000,
+    "enterprise": 38000
+   },
+   "price": 40000,
+   "xy": [
+    1926,
+    1024
+   ]
+  },
+  {
+   "id": 26,
+   "zone": "outer",
+   "type": "company",
+   "name": "Форд",
+   "color": "yellow",
+   "quote": 80000,
+   "rent": {
+    "plot": 30000,
+    "branch": 60000,
+    "enterprise": 100000
+   },
+   "price": 150000,
+   "xy": [
+    1926,
+    1197
+   ]
+  },
+  {
+   "id": 27,
+   "zone": "outer",
+   "type": "card",
+   "name": "Извещение",
+   "deck": "notice",
+   "xy": [
+    1926,
+    1371
+   ]
+  },
+  {
+   "id": 28,
+   "zone": "outer",
+   "type": "company",
+   "name": "Ягуар",
+   "color": "yellow",
+   "quote": 80000,
+   "rent": {
+    "plot": 20000,
+    "branch": 36000,
+    "enterprise": 72000
+   },
+   "price": 100000,
+   "xy": [
+    1926,
+    1544
+   ]
+  },
+  {
+   "id": 29,
+   "zone": "outer",
+   "type": "company",
+   "name": "Опель",
+   "color": "yellow",
+   "quote": 90000,
+   "rent": {
+    "plot": 4000,
+    "branch": 16000,
+    "enterprise": 48000
+   },
+   "price": 80000,
+   "xy": [
+    1926,
+    1717
+   ]
+  },
+  {
+   "id": 30,
+   "zone": "outer",
+   "type": "hotel",
+   "name": "Отель",
+   "fee": 10000,
+   "ownable": true,
+   "price": null,
+   "требует_оцифровки": "цена покупки отеля на поле не указана",
+   "xy": [
+    1926,
+    1926
+   ]
+  },
+  {
+   "id": 31,
+   "zone": "outer",
+   "type": "customs_post",
+   "name": "Таможенный пост",
+   "xy": [
+    1717,
+    1926
+   ]
+  },
+  {
+   "id": 32,
+   "zone": "outer",
+   "type": "company",
+   "name": "Nestlé",
+   "color": "blue",
+   "quote": 25000,
+   "rent": {
+    "plot": 4000,
+    "branch": 10000,
+    "enterprise": 14000
+   },
+   "price": 16000,
+   "xy": [
+    1544,
+    1926
+   ]
+  },
+  {
+   "id": 33,
+   "zone": "outer",
+   "type": "win",
+   "name": "Прибыль",
+   "amount": 50000,
+   "xy": [
+    1371,
+    1926
+   ]
+  },
+  {
+   "id": 34,
+   "zone": "outer",
+   "type": "company",
+   "name": "Макдональдс",
+   "color": "blue",
+   "quote": 35000,
+   "rent": {
+    "plot": 6000,
+    "branch": 16000,
+    "enterprise": 26000
+   },
+   "price": 30000,
+   "xy": [
+    1197,
+    1926
+   ]
+  },
+  {
+   "id": 35,
+   "zone": "outer",
+   "type": "company",
+   "name": "Баскин Роббинс",
+   "color": "blue",
+   "quote": 40000,
+   "rent": {
+    "plot": 8000,
+    "branch": 20000,
+    "enterprise": 22000
+   },
+   "price": 38000,
+   "xy": [
+    1024,
+    1926
+   ]
+  },
+  {
+   "id": 36,
+   "zone": "outer",
+   "type": "card",
+   "name": "Сюрприз",
+   "deck": "surprise",
+   "xy": [
+    851,
+    1926
+   ]
+  },
+  {
+   "id": 37,
+   "zone": "outer",
+   "type": "company",
+   "name": "Фольксваген",
+   "color": "green",
+   "quote": 80000,
+   "rent": {
+    "plot": 10000,
+    "branch": 18000,
+    "enterprise": 76000
+   },
+   "price": 84000,
+   "xy": [
+    677,
+    1926
+   ]
+  },
+  {
+   "id": 38,
+   "zone": "outer",
+   "type": "company",
+   "name": "Мерседес",
+   "color": "green",
+   "quote": 300000,
+   "rent": {
+    "plot": 24000,
+    "branch": 38000,
+    "enterprise": 68000
+   },
+   "price": 84000,
+   "xy": [
+    504,
+    1926
+   ]
+  },
+  {
+   "id": 39,
+   "zone": "outer",
+   "type": "company",
+   "name": "BMW",
+   "color": "green",
+   "quote": 100000,
+   "rent": {
+    "plot": 14000,
+    "branch": 34000,
+    "enterprise": 42000
+   },
+   "price": 84000,
+   "xy": [
+    331,
+    1926
+   ]
+  },
+  {
+   "id": 40,
+   "zone": "inner",
+   "type": "customs",
+   "name": "Таможня",
+   "entryFee": 10000,
+   "exitDuty": 15000,
+   "exitPerRuProperty": 5000,
+   "xy": [
+    1728,
+    1696
+   ]
+  },
+  {
+   "id": 41,
+   "zone": "inner",
+   "type": "customs",
+   "name": "Таможня",
+   "entryFee": 10000,
+   "exitDuty": 15000,
+   "exitPerRuProperty": 5000,
+   "xy": [
+    1569,
+    1696
+   ]
+  },
+  {
+   "id": 42,
+   "zone": "inner",
+   "type": "ru_company",
+   "name": "АЗЛК",
+   "kind": "Автомобильный завод",
+   "color": "red",
+   "price": 100000,
+   "rentSingle": 80000,
+   "xy": [
+    1370,
+    1690
+   ]
+  },
+  {
+   "id": 43,
+   "zone": "inner",
+   "type": "ru_company",
+   "name": "СОТЕЛ",
+   "kind": "Федеральная сотовая сеть",
+   "color": "yellow",
+   "price": 120000,
+   "rentSingle": 100000,
+   "xy": [
+    1196,
+    1690
+   ]
+  },
+  {
+   "id": 44,
+   "zone": "inner",
+   "type": "ru_company",
+   "name": "Балтика",
+   "kind": "Пивоваренная компания",
+   "color": "blue",
+   "price": 150000,
+   "rentSingle": 130000,
+   "xy": [
+    1021,
+    1690
+   ]
+  },
+  {
+   "id": 45,
+   "zone": "inner",
+   "type": "ru_company",
+   "name": "Россия",
+   "kind": "Шоколадная фабрика",
+   "color": "red",
+   "price": 180000,
+   "rentSingle": 150000,
+   "xy": [
+    848,
+    1690
+   ]
+  },
+  {
+   "id": 46,
+   "zone": "inner",
+   "type": "ru_company",
+   "name": "Грин Мама",
+   "kind": "Российская косметика",
+   "color": "green",
+   "price": 200000,
+   "rentSingle": 100000,
+   "xy": [
+    498,
+    1690
+   ]
+  },
+  {
+   "id": 47,
+   "zone": "inner",
+   "type": "supermarket",
+   "name": "Супермаркет",
+   "fee": 15000,
+   "price": 60000,
+   "ownerTax": 5000,
+   "xy": [
+    339,
+    1654
+   ]
+  },
+  {
+   "id": 48,
+   "zone": "inner",
+   "type": "ru_company",
+   "name": "38 Канал",
+   "kind": "Компания",
+   "color": "yellow",
+   "price": 250000,
+   "rentSingle": 50000,
+   "xy": [
+    352,
+    1370
+   ]
+  },
+  {
+   "id": 49,
+   "zone": "inner",
+   "type": "exchange_gate",
+   "name": "Биржа",
+   "xy": [
+    305,
+    516
+   ]
+  },
+  {
+   "id": 50,
+   "zone": "inner",
+   "type": "win50",
+   "name": "Выигрыш",
+   "amount": 20000,
+   "stocks": 5,
+   "xy": [
+    1320,
+    880
+   ]
+  },
+  {
+   "id": 51,
+   "zone": "inner",
+   "type": "roulette_gate",
+   "name": "Рулетка (вход)",
+   "xy": [
+    1327,
+    530
+   ]
+  },
+  {
+   "id": 52,
+   "zone": "inner",
+   "type": "bank",
+   "name": "Банк",
+   "premium": 50000,
+   "transferFee": 25000,
+   "twin": 24,
+   "xy": [
+    1640,
+    848
+   ]
+  },
+  {
+   "id": 53,
+   "zone": "inner",
+   "type": "ru_company",
+   "name": "ЗИЛ",
+   "kind": "Автозавод",
+   "color": "red",
+   "price": 350000,
+   "rentSingle": 105000,
+   "xy": [
+    1672,
+    1028
+   ]
+  },
+  {
+   "id": 54,
+   "zone": "inner",
+   "type": "ru_company",
+   "name": "Сбербанк",
+   "kind": "Банк",
+   "color": "green",
+   "price": 500000,
+   "rentSingle": 350000,
+   "xy": [
+    1672,
+    1205
+   ]
+  },
+  {
+   "id": 55,
+   "zone": "inner",
+   "type": "ru_company",
+   "name": "Аэрофлот",
+   "kind": "Компания",
+   "color": "blue",
+   "price": 750000,
+   "rentSingle": 500000,
+   "xy": [
+    1672,
+    1380
+   ]
+  }
+ ],
+ "groups": [
+  {
+   "color": "red",
+   "cells": [
+    1,
+    3,
+    5
+   ]
+  },
+  {
+   "color": "yellow",
+   "cells": [
+    6,
+    8,
+    9
+   ]
+  },
+  {
+   "color": "blue",
+   "cells": [
+    11,
+    13,
+    15
+   ]
+  },
+  {
+   "color": "green",
+   "cells": [
+    16,
+    18,
+    19
+   ]
+  },
+  {
+   "color": "red",
+   "cells": [
+    21,
+    22,
+    25
+   ],
+   "примечание": "между 22 и 25 стоят клетки «Штраф» и «Банк» — правило перечисляет только Сюрприз/Извещение/Выигрыш; ведущий может исключить группу"
+  },
+  {
+   "color": "yellow",
+   "cells": [
+    26,
+    28,
+    29
+   ]
+  },
+  {
+   "color": "blue",
+   "cells": [
+    32,
+    34,
+    35
+   ]
+  },
+  {
+   "color": "green",
+   "cells": [
+    37,
+    38,
+    39
+   ]
+  }
+ ],
+ "edges": {
+  "outerNext": "k -> k+1, 39 -> 0",
+  "innerLoop": [
+   40,
+   41,
+   42,
+   43,
+   44,
+   45,
+   46,
+   47,
+   48,
+   49,
+   50,
+   51,
+   52,
+   53,
+   54,
+   55
+  ],
+  "branches": [
+   {
+    "from": 31,
+    "to": 40,
+    "label": "Въезд в Россию через таможню (31→40)",
+    "fee": 10000,
+    "feeKey": "customsEntry"
+   },
+   {
+    "from": 40,
+    "to": 0,
+    "label": "Выезд за рубеж через таможенный пост (40→Старт)",
+    "feeKey": "customsExit"
+   },
+   {
+    "from": 41,
+    "to": 0,
+    "label": "Выезд за рубеж через таможенный пост (41→Старт)",
+    "feeKey": "customsExit"
+   }
+  ],
+  "bankTransfer": {
+   "a": 24,
+   "b": 52,
+   "fee": 25000
+  },
+  "highway": {
+   "from": 30,
+   "exits": [
+    46,
+    37
+   ]
+  }
+ },
+ "highway": [
+  {
+   "id": "h1",
+   "n": 1,
+   "name": "Получите в банке 50 000",
+   "effect": {
+    "kind": "money",
+    "amount": 50000
+   },
+   "xy": [
+    1425,
+    1440
+   ]
+  },
+  {
+   "id": "h2",
+   "n": 2,
+   "name": "Оплатите штраф",
+   "effect": {
+    "kind": "draw",
+    "deck": "fine"
+   },
+   "xy": [
+    1338,
+    1352
+   ]
+  },
+  {
+   "id": "h3",
+   "n": 3,
+   "name": "Выигрыш 5 акций",
+   "effect": {
+    "kind": "stocks",
+    "count": 5
+   },
+   "xy": [
+    1254,
+    1260
+   ]
+  },
+  {
+   "id": "h4",
+   "n": 4,
+   "name": "Вас ждёт подарок",
+   "effect": {
+    "kind": "draw",
+    "deck": "gift"
+   },
+   "xy": [
+    1162,
+    1155
+   ]
+  },
+  {
+   "id": "h5",
+   "n": 5,
+   "name": "Пропуск хода",
+   "effect": {
+    "kind": "skip"
+   },
+   "xy": [
+    1023,
+    1045
+   ]
+  },
+  {
+   "id": "h6",
+   "n": 6,
+   "name": "Пропуск хода",
+   "effect": {
+    "kind": "skip"
+   },
+   "xy": [
+    863,
+    1045
+   ]
+  },
+  {
+   "id": "h7",
+   "n": 7,
+   "name": "Получите 3 акции любого цвета",
+   "effect": {
+    "kind": "stocks",
+    "count": 3
+   },
+   "xy": [
+    702,
+    1155
+   ]
+  },
+  {
+   "id": "h8",
+   "n": 8,
+   "name": "Оплатите в банк 25 000",
+   "effect": {
+    "kind": "money",
+    "amount": -25000
+   },
+   "xy": [
+    658,
+    1374
+   ]
+  },
+  {
+   "id": "h9",
+   "n": 9,
+   "name": "Получите извещение",
+   "effect": {
+    "kind": "draw",
+    "deck": "notice"
+   },
+   "xy": [
+    658,
+    1550
+   ]
+  },
+  {
+   "id": "h10",
+   "n": 10,
+   "name": "Выберите себе подарок",
+   "effect": {
+    "kind": "chooseCard",
+    "deck": "gift"
+   },
+   "xy": [
+    658,
+    1711
+   ]
+  }
+ ],
+ "exchange": {
+  "lanes": [
+   {
+    "color": "blue",
+    "cells": [
+     [
+      351,
+      350
+     ],
+     [
+      393,
+      350
+     ],
+     [
+      435,
+      350
+     ],
+     [
+      477,
+      350
+     ],
+     [
+      519,
+      350
+     ],
+     [
+      561,
+      350
+     ],
+     [
+      603,
+      350
+     ],
+     [
+      645,
+      350
+     ],
+     [
+      687,
+      350
+     ],
+     [
+      729,
+      350
+     ],
+     [
+      771,
+      350
+     ],
+     [
+      812,
+      350
+     ],
+     [
+      854,
+      350
+     ],
+     [
+      896,
+      350
+     ],
+     [
+      938,
+      350
+     ],
+     [
+      980,
+      350
+     ],
+     [
+      1022,
+      350
+     ],
+     [
+      1064,
+      350
+     ],
+     [
+      1106,
+      350
+     ],
+     [
+      1148,
+      350
+     ]
+    ]
+   },
+   {
+    "color": "green",
+    "cells": [
+     [
+      351,
+      461
+     ],
+     [
+      393,
+      461
+     ],
+     [
+      435,
+      461
+     ],
+     [
+      477,
+      461
+     ],
+     [
+      519,
+      461
+     ],
+     [
+      561,
+      461
+     ],
+     [
+      603,
+      461
+     ],
+     [
+      645,
+      461
+     ],
+     [
+      687,
+      461
+     ],
+     [
+      729,
+      461
+     ],
+     [
+      771,
+      461
+     ],
+     [
+      812,
+      461
+     ],
+     [
+      854,
+      461
+     ],
+     [
+      896,
+      461
+     ],
+     [
+      938,
+      461
+     ],
+     [
+      980,
+      461
+     ],
+     [
+      1022,
+      461
+     ],
+     [
+      1064,
+      461
+     ],
+     [
+      1106,
+      461
+     ],
+     [
+      1148,
+      461
+     ]
+    ]
+   },
+   {
+    "color": "yellow",
+    "cells": [
+     [
+      351,
+      572
+     ],
+     [
+      393,
+      572
+     ],
+     [
+      435,
+      572
+     ],
+     [
+      477,
+      572
+     ],
+     [
+      519,
+      572
+     ],
+     [
+      561,
+      572
+     ],
+     [
+      603,
+      572
+     ],
+     [
+      645,
+      572
+     ],
+     [
+      687,
+      572
+     ],
+     [
+      729,
+      572
+     ],
+     [
+      771,
+      572
+     ],
+     [
+      812,
+      572
+     ],
+     [
+      854,
+      572
+     ],
+     [
+      896,
+      572
+     ],
+     [
+      938,
+      572
+     ],
+     [
+      980,
+      572
+     ],
+     [
+      1022,
+      572
+     ],
+     [
+      1064,
+      572
+     ],
+     [
+      1106,
+      572
+     ],
+     [
+      1148,
+      572
+     ]
+    ]
+   },
+   {
+    "color": "red",
+    "cells": [
+     [
+      351,
+      684
+     ],
+     [
+      393,
+      684
+     ],
+     [
+      435,
+      684
+     ],
+     [
+      477,
+      684
+     ],
+     [
+      519,
+      684
+     ],
+     [
+      561,
+      684
+     ],
+     [
+      603,
+      684
+     ],
+     [
+      645,
+      684
+     ],
+     [
+      687,
+      684
+     ],
+     [
+      729,
+      684
+     ],
+     [
+      771,
+      684
+     ],
+     [
+      812,
+      684
+     ],
+     [
+      854,
+      684
+     ],
+     [
+      896,
+      684
+     ],
+     [
+      938,
+      684
+     ],
+     [
+      980,
+      684
+     ],
+     [
+      1022,
+      684
+     ],
+     [
+      1064,
+      684
+     ],
+     [
+      1106,
+      684
+     ],
+     [
+      1148,
+      684
+     ]
+    ]
+   }
+  ],
+  "start": [
+   305,
+   516
+  ],
+  "specialCells": [
+   5,
+   10,
+   15,
+   20
+  ],
+  "length": 20,
+  "exits": [
+   11,
+   21,
+   50
+  ]
+ },
+ "roulette": {
+  "center": [
+   1542,
+   408
+  ],
+  "startSlot": 3,
+  "direction": "ccw",
+  "lapsToLeave": 2,
+  "exitTo": [
+   52,
+   24
+  ],
+  "order": [
+   3,
+   2,
+   1,
+   0,
+   11,
+   10,
+   9,
+   8,
+   7,
+   6,
+   5,
+   4
+  ],
+  "sectors": [
+   {
+    "slot": 0,
+    "label": "В БАНК",
+    "type": "to_bank",
+    "value": null,
+    "требует_оцифровки": "значение сектора «В БАНК» на поле не указано",
+    "xy": [
+     1509,
+     285
+    ]
+   },
+   {
+    "slot": 1,
+    "label": "−30 000",
+    "value": -30000,
+    "xy": [
+     1575,
+     285
+    ]
+   },
+   {
+    "slot": 2,
+    "label": "+65 000",
+    "value": 65000,
+    "xy": [
+     1632,
+     318
+    ]
+   },
+   {
+    "slot": 3,
+    "label": "−25 000",
+    "value": -25000,
+    "start": true,
+    "xy": [
+     1665,
+     375
+    ]
+   },
+   {
+    "slot": 4,
+    "label": "+15 000",
+    "value": 15000,
+    "xy": [
+     1665,
+     441
+    ]
+   },
+   {
+    "slot": 5,
+    "label": "−5 000",
+    "value": -5000,
+    "xy": [
+     1632,
+     498
+    ]
+   },
+   {
+    "slot": 6,
+    "label": "−30 000",
+    "value": -30000,
+    "exit": true,
+    "xy": [
+     1575,
+     531
+    ]
+   },
+   {
+    "slot": 7,
+    "label": "+30 000",
+    "value": 30000,
+    "exit": true,
+    "xy": [
+     1509,
+     531
+    ]
+   },
+   {
+    "slot": 8,
+    "label": "−1 000",
+    "value": -1000,
+    "exit": true,
+    "xy": [
+     1452,
+     498
+    ]
+   },
+   {
+    "slot": 9,
+    "label": "+20 000",
+    "value": 20000,
+    "exit": true,
+    "xy": [
+     1419,
+     441
+    ]
+   },
+   {
+    "slot": 10,
+    "label": "−20 000",
+    "value": -20000,
+    "xy": [
+     1419,
+     375
+    ]
+   },
+   {
+    "slot": 11,
+    "label": "В БАНК",
+    "type": "to_bank",
+    "value": null,
+    "требует_оцифровки": "значение сектора «В БАНК» на поле не указано",
+    "xy": [
+     1452,
+     318
+    ]
+   }
+  ]
+ }
+}
