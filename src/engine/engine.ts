@@ -1,5 +1,5 @@
 import type {
-  Action, ApplyResult, Card, CardEffect, Color, DeckId, ExCard, GameData, GameState, HighwayEffect, Loan, Lot, PlayerId,
+  Action, ApplyResult, Card, CardEffect, Color, DeckId, ExCard, GameData, GameState, HighwayEffect, Level, Loan, Lot, PlayerId,
   Pos, Prompt, PromptOption, RoleId, Settings, Bundle,
 } from './types';
 import { COLORS, COLOR_RU, COLOR_RU_PL, LEVEL_RU, ROLE_RU } from './types';
@@ -19,7 +19,7 @@ export interface Setup {
   settings?: Partial<Settings>;
   seed?: number;
   keepOrder?: boolean; // очерёдность задаёт ведущий (тесты)
-  rollOrder?: boolean; // разыграть очередь хода двумя кубиками (по умолчанию да)
+  rollOrder?: boolean; // разыграть очередь хода броском одного кубика (по умолчанию да)
 }
 
 export const DEFAULT_SETTINGS: Settings = { startMoney: 350000, startQuote: 10000, startStocks: 1, rentNeedsClaim: true, allowForcedDice: false };
@@ -55,7 +55,7 @@ export function createGame(data: GameData, setup: Setup): ApplyResult {
     s.orderPhase = { buckets: [players.map((p) => p.id)], rolling: players.map((p) => p.id), round: 1, sums: {} };
     s.turn.stage = 'order';
     s.turn.player = players[0].id;
-    log(c, 'turn', `Розыгрыш очерёдности: каждый бросает два кубика, кто выбросит больше — ходит раньше. Первым бросает ${players[0].name}.`);
+    log(c, 'turn', `Розыгрыш очерёдности: каждый бросает один кубик, кто выбросит больше — ходит раньше. Первым бросает ${players[0].name}.`);
     return { state: s, events: c.ev };
   }
   const first = s.order[0];
@@ -99,12 +99,32 @@ function enumerate(s: GameState, start: Pos, n: number): Path[] {
 }
 function pathLabel(s: GameState, p: Path): string {
   const end = p.steps.at(-1)?.to;
-  const via = p.steps.filter((x) => x.label).map((x) => x.label!.replace(/\s*\(.*\)/, ''));
-  return `${end ? posLabel(s, end) : '—'}${via.length ? ` · ${via.join(', ')}` : ''}`;
+  return end ? posLabel(s, end) : '—';
+}
+/** Пояснение к маршруту мелким шрифтом: через какие развилки он идёт и из чего складывается пошлина. */
+function pathHint(s: GameState, pid: PlayerId, p: Path): string | undefined {
+  const parts = p.steps.filter((x) => x.label).map((x) => {
+    const text = x.label!.replace(/\s*\(.*\)/, '');
+    if (x.feeKey !== 'customsExit') return text;
+    const cell = cellOf(s, 40);
+    const n = ruProperties(s, pid);
+    return `${text}: пошлина ${fmt(cell.exitDuty ?? 15000)}${n ? ` + ${fmt(cell.exitPerRuProperty ?? 5000)} × ${n} (недвижимость в России)` : ''}`;
+  });
+  return parts.length ? parts.join('; ') : undefined;
 }
 
 function ruProperties(s: GameState, pid: PlayerId) {
   return propsOf(s, pid).filter((pr) => cellOf(s, pr.cell).zone === 'inner').length;
+}
+
+/** Сколько стоят платные переходы на пути (таможня). */
+function pathFee(s: GameState, pid: PlayerId, path: Path) {
+  let fee = 0;
+  for (const st of path.steps) {
+    if (st.feeKey === 'customsEntry') fee += st.fee ?? 10000;
+    if (st.feeKey === 'customsExit') { const cell = cellOf(s, 40); fee += (cell.exitDuty ?? 15000) + (cell.exitPerRuProperty ?? 5000) * ruProperties(s, pid); }
+  }
+  return fee;
 }
 
 function executePath(c: Ctx, pid: PlayerId, path: Path) {
@@ -142,7 +162,7 @@ function moveBy(c: Ctx, pid: PlayerId, steps: number) {
   if (paths.length <= 1) return executePath(c, pid, paths[0] ?? { steps: [] });
   ask(c, {
     to: pid, title: 'Выберите маршрут', text: `Выпало ${steps}. Доступно несколько путей:`,
-    options: paths.map((pa, i) => ({ id: String(i), label: pathLabel(c.s, pa), target: pa.steps.at(-1)?.to, hint: pa.steps.some((x) => x.fee || x.feeKey) ? 'платный переход' : undefined })),
+    options: paths.map((pa, i) => ({ id: String(i), label: pathLabel(c.s, pa), target: pa.steps.at(-1)?.to, hint: pathHint(c.s, pid, pa), price: pathFee(c.s, pid, pa) ? `−${fmt(pathFee(c.s, pid, pa))}` : undefined })),
     ctx: { type: 'route', paths },
   });
 }
@@ -229,9 +249,10 @@ function landCompany(c: Ctx, pid: PlayerId, id: number) {
   createClaim(c, pid, pr.owner, id, cell.rent ? cell.rent[pr.level as 'plot' | 'branch' | 'enterprise'] ?? 0 : 0);
 }
 
-function innerPrice(c: Ctx, id: number) {
-  const cell = cellOf(c.s, id);
-  return ruling(c, 'innerPrice') === 'full' ? cell.price ?? 0 : Math.round((cell.price ?? 0) / 2);
+/** Аренда фирмы в России — «сумма, указанная на клетке» (стр. 4): на клетке одно число, оно и берётся
+ *  с участка и с филиала (см. rulings.inner). */
+export function ruRent(cell: { rentSingle?: number }, _level: Level) {
+  return cell.rentSingle ?? 0;
 }
 
 function landRuCompany(c: Ctx, pid: PlayerId, id: number) {
@@ -239,13 +260,21 @@ function landRuCompany(c: Ctx, pid: PlayerId, id: number) {
   const cell = cellOf(s, id);
   const pr = s.props[id];
   const p = P(s, pid);
+  const price = cell.price ?? 0;
   if (!pr) {
-    const cost = innerPrice(c, id);
-    ask(c, { to: pid, title: `${cell.name} — свободная фирма`, text: `${cell.kind ?? ''} «${cell.name}». Цена на поле ${fmt(cell.price ?? 0)}; аренда ${fmt(cell.rentSingle ?? 0)}.`, options: [{ id: 'buy', label: `Купить за ${fmt(cost)}`, tone: 'primary', disabled: p.money < cost }, { id: 'skip', label: 'Отказаться' }], ctx: { type: 'buyRu', cell: id, cost } });
+    const cost = Math.round(price / 2);
+    ask(c, { to: pid, title: `${cell.name} — свободный участок`, text: `${cell.kind ?? ''} «${cell.name}». Купить участок за половину стоимости: ${fmt(cost)} (стоимость ${fmt(price)}). Аренда владельцу ${fmt(ruRent(cell, 'plot'))}.`, options: [{ id: 'buy', label: `Купить участок ${fmt(cost)}`, tone: 'primary', disabled: p.money < cost }, { id: 'skip', label: 'Отказаться' }], ctx: { type: 'buyPlot', cell: id, cost } });
     return;
   }
-  if (pr.owner === pid || pr.owner === 'bank') return;
-  createClaim(c, pid, pr.owner, id, cell.rentSingle ?? 0);
+  if (pr.owner === pid) {
+    if (pr.level === 'plot') {
+      const cost = price - Math.round(price / 2);
+      ask(c, { to: pid, title: `${cell.name} — ваш участок`, text: `Открыть филиал, уплатив вторую половину стоимости: ${fmt(cost)}.`, options: [{ id: 'buy', label: `Открыть филиал ${fmt(cost)}`, tone: 'primary', disabled: p.money < cost }, { id: 'skip', label: 'Не сейчас' }], ctx: { type: 'buyBranch', cell: id, cost } });
+    }
+    return;
+  }
+  if (pr.owner === 'bank') return;
+  createClaim(c, pid, pr.owner, id, ruRent(cell, pr.level));
 }
 
 function landHotel(c: Ctx, pid: PlayerId) {
@@ -260,7 +289,7 @@ function landHotel(c: Ctx, pid: PlayerId) {
       { id: 'stay', label: 'Двигаться дальше обычным порядком', target: C(30) },
       { id: 'highway', label: 'Проехать по автостраде (с клетки 1)', target: { z: 'h', n: 1 } },
       { id: 'roulette', label: 'Сыграть два раза на рулетке и вернуться в отель', target: { z: 'r', slot: c.s.data.board.roulette.startSlot } as Pos },
-      { id: 'buyRu', label: 'Открыть фирму в России за ½ цены', disabled: !free.length },
+      { id: 'buyRu', label: 'Открыть фирму в России за ½ стоимости', disabled: !free.length },
     ],
     ctx: { type: 'hotel' },
   });
@@ -316,7 +345,8 @@ function createClaim(c: Ctx, payer: PlayerId, owner: PlayerId, cell: number, amo
   if (amount <= 0) return;
   const cl = { id: uid(s, 'r'), payer, owner, cell, amount, level: pr.level, rollIndex: s.rollIndex, status: 'open' as const };
   const payerP = P(s, payer);
-  if (payerP.rentWaivers.includes(owner)) {
+  // карточка «Подарок» освобождает от аренды только филиала или предприятия, не участка
+  if (payerP.rentWaivers.includes(owner) && (pr.level === 'branch' || pr.level === 'enterprise')) {
     s.claims.push(cl);
     ask(c, { to: payer, title: 'Подарок: освобождение от аренды', text: `У вас есть карточка «${pname(s, owner)} не берёт с Вас плату за аренду». Использовать её для ${cellName(s, cell)} (${fmt(amount)})?`, options: [{ id: 'use', label: 'Использовать', tone: 'primary' }, { id: 'keep', label: 'Сохранить на потом' }], ctx: { type: 'waiver', claim: cl.id } });
     return;
@@ -406,10 +436,13 @@ function applyCard(c: Ctx, pid: PlayerId, e: CardEffect, card: Card) {
       return;
     }
     case 'sellBranchToLady': {
-      const ladies = others.filter((x) => x.lady);
       const branches = propsOf(s, pid).filter((x) => x.level === 'branch' && !x.pledged);
-      if (!ladies.length) { log(c, 'info', 'Среди игроков нет дам — карточка без последствий.'); return; }
+      if (!others.some((x) => x.lady)) { log(c, 'info', 'Среди игроков нет дам — карточка без последствий.'); return; }
       if (!branches.length) { log(c, 'info', `У ${p.name} нет филиалов — карточка без последствий.`); return; }
+      // дама, которой не хватает денег даже на самый дешёвый филиал, купить не может
+      const cheapest = Math.min(...branches.map((b) => Math.round(propValue(s, b) / 2)));
+      const ladies = others.filter((x) => x.lady && x.money >= cheapest);
+      if (!ladies.length) { log(c, 'info', 'Ни у одной дамы нет денег на филиал за полцены — карточка без последствий.'); return; }
       ask(c, { to: pid, title: 'Уступите филиал даме за полцены', text: 'Выберите филиал (цена — половина стоимости филиала).', options: [{ id: 'ok', label: 'Выбрать', tone: 'primary' }], form: { kind: 'pickCell', cells: branches.map((b) => b.cell), players: ladies.map((l) => l.id) }, ctx: { type: 'ladyBranch' } });
       return;
     }
@@ -469,8 +502,10 @@ function exchangeRoll(c: Ctx, pid: PlayerId, sum: number) {
   setQuote(c, pid, lane, p.quotes[lane] + target * 1000, `биржа: остановка на ${target} (${COLOR_RU[lane]} дорожка)`, changes);
   let msg = `${p.name}: ${COLOR_RU_PL[lane]} акции +${target} п.`;
   if (s.data.board.exchange.specialCells.includes(target)) {
-    for (const col of COLORS) if (col !== lane) setQuote(c, pid, col, p.quotes[col] + target * 1000, `биржа: особая клетка ${target}`, changes);
-    msg += `, остальные цвета +${target} п. (особая клетка)`;
+    // растут только те другие цвета, акции которых сейчас есть у игрока (буклет, стр. 6)
+    const held = COLORS.filter((col) => col !== lane && p.stocks[col] > 0);
+    for (const col of held) setQuote(c, pid, col, p.quotes[col] + target * 1000, `биржа: особая клетка ${target}`, changes);
+    if (held.length) msg += `, ${held.map((col) => COLOR_RU_PL[col]).join(', ')} +${target} п. (особая клетка)`;
   }
   c.ev.push({ t: 'quotes', changes });
   log(c, 'market', msg, pid);
@@ -691,15 +726,15 @@ export function awaitingRoll(s: GameState): 'main' | 'exchange' | 'roulette' | '
   return null;
 }
 
-/** Бросок на очерёдность: записываем сумму, когда группа отбросала — делим её по суммам; равные бросают снова. */
+/** Бросок на очерёдность одним кубиком: когда группа отбросала — делим её по очкам; равные бросают снова. */
 function orderRoll(c: Ctx, pid: PlayerId, values: number[]) {
   const s = c.s;
   const ph = s.orderPhase!;
-  const sum = values[0] + values[1];
+  const sum = values[0];
   ph.sums[pid] = sum;
   s.orderRoll?.find((r) => r.player === pid)?.rolls.push(values);
   ph.rolling = ph.rolling.filter((x) => x !== pid);
-  log(c, 'info', `${pname(s, pid)} — на очерёдность: ${values[0]} + ${values[1]} = ${sum}${ph.round > 1 ? ' (переброс)' : ''}`, pid);
+  log(c, 'info', `${pname(s, pid)} — на очерёдность: ${sum}${ph.round > 1 ? ' (переброс)' : ''}`, pid);
   if (ph.rolling.length) { s.turn.player = ph.rolling[0]; return; }
   // группа отбросала: делим её по суммам
   const bi = ph.buckets.findIndex((b) => b.length > 1);
@@ -754,11 +789,11 @@ function onAnswer(c: Ctx, q: Prompt, option: string, payload: any): string | voi
       toast(c, `${pname(s, pid)} открывает предприятие ${cellOf(s, x.cell).name}!`, 'good');
       return;
     }
-    case 'buyRu':
+    case 'buyRu': // супермаркет (и старые сохранения, где фирмы в России покупались целиком)
       if (option !== 'buy') return;
-      if (cellOf(s, x.cell).type === 'ru_company')      transfer(c, pid, 'bank', x.cost, `покупка ${cellName(s, x.cell)}`);
+      transfer(c, pid, 'bank', x.cost, `покупка ${cellName(s, x.cell)}`);
       setProp(c, x.cell, pid, 'firm', x.cost);
-      log(c, 'prop', `Реестр: ${pname(s, pid)} — ${cellName(s, x.cell)} (фирма).`, pid);
+      log(c, 'prop', `Реестр: ${pname(s, pid)} — ${cellName(s, x.cell)}.`, pid);
       return;
     case 'exGate': if (option === 'play') startExchange(c, pid, false); return;
     case 'brokerGate':
@@ -778,18 +813,18 @@ function onAnswer(c: Ctx, q: Prompt, option: string, payload: any): string | voi
       if (option === 'roulette') return startRoulette(c, pid, 2, 30);
       if (option === 'buyRu') {
         const free = s.data.board.cells.filter((cl) => cl.type === 'ru_company' && !s.props[cl.id]);
-        ask(c, { to: pid, title: 'Фирма в России за ½ цены', text: 'Выберите свободную клетку внутреннего периметра. Дальше движение по внутреннему периметру.', options: [...free.map((cl) => ({ id: String(cl.id), target: C(cl.id), label: `${cellName(s, cl.id)} — ${fmt(Math.round((cl.price ?? 0) / 2))}`, disabled: P(s, pid).money < Math.round((cl.price ?? 0) / 2) })), { id: 'none', label: 'Передумал', tone: 'muted' as const }], ctx: { type: 'hotelBuy' } });
+        ask(c, { to: pid, title: 'Участок в России за ½ стоимости', text: 'Выберите свободную клетку внутреннего периметра. Дальше движение по внутреннему периметру.', options: [...free.map((cl) => ({ id: String(cl.id), target: C(cl.id), label: `${cellName(s, cl.id)} — ${fmt(Math.round((cl.price ?? 0) / 2))}`, disabled: P(s, pid).money < Math.round((cl.price ?? 0) / 2) })), { id: 'none', label: 'Передумал', tone: 'muted' as const }], ctx: { type: 'hotelBuy' } });
       }
       return;
     case 'hotelBuy': {
       if (option === 'none') return;
       const id = Number(option);
       const cost = Math.round((cellOf(s, id).price ?? 0) / 2);
-      transfer(c, pid, 'bank', cost, `фирма в России из отеля: ${cellName(s, id)}`);
-      setProp(c, id, pid, 'firm', cost);
+      transfer(c, pid, 'bank', cost, `участок в России из отеля: ${cellName(s, id)}`);
+      setProp(c, id, pid, 'plot', cost);
       P(s, pid).pos = C(id);
       c.ev.push({ t: 'teleport', player: pid, to: C(id) });
-      log(c, 'prop', `Реестр: ${pname(s, pid)} — ${cellName(s, id)} (фирма). Фишка переходит на внутренний периметр.`, pid);
+      log(c, 'prop', `Реестр: ${pname(s, pid)} — ${cellName(s, id)} (участок). Фишка переходит на внутренний периметр.`, pid);
       return;
     }
     case 'freeStocks': {
@@ -959,6 +994,12 @@ function canOperate(s: GameState, pid: PlayerId) {
   return own || s.debts.some((d) => d.debtor === pid);
 }
 
+/** Сколько акций цвета даёт кредит под залог стоимостью value (по наибольшей котировке). */
+export function loanStockCount(s: GameState, value: number, color: Color) {
+  const q = maxQuote(s, color);
+  return q > 0 ? Math.floor(value / q) : 0;
+}
+
 function issueLoan(c: Ctx, req: Extract<Action, { type: 'requestLoan' }>) {
   const s = c.s;
   const pr = s.props[req.cell];
@@ -1031,8 +1072,8 @@ function dispatch(c: Ctx, a: Action): string | void {
       if (!mode) return s.prompts.length ? 'Сначала ответьте на вопрос' : s.debts.some((d) => d.debtor === a.by) ? 'Сначала погасите долг' : 'Бросок сейчас недоступен';
       const p = P(s, a.by);
       if (mode === 'order') {
-        const forcedO = s.settings.allowForcedDice && a.force?.length === 2 ? a.force : null;
-        const v = forcedO ?? [die(s), die(s)];
+        const forcedO = s.settings.allowForcedDice && a.force?.length ? [a.force[0]] : null;
+        const v = forcedO ?? [die(s)];
         c.ev.push({ t: 'dice', player: a.by, values: v });
         return orderRoll(c, a.by, v);
       }
@@ -1116,13 +1157,16 @@ function dispatch(c: Ctx, a: Action): string | void {
       const pr = s.props[a.cell];
       if (!pr || pr.owner !== a.by) return 'Залогом может быть только ваша собственность';
       if (pr.pledged) return 'Имущество уже в залоге';
+      // кредит выдаётся сразу на полную стоимость залога; акциями — сколько целых акций в неё помещается
       const value = propValue(s, pr);
-      const amt = a.kind === 'money' ? a.amount ?? 0 : maxQuote(s, a.color!) * (a.count ?? 0);
-      if (amt <= 0) return 'Укажите сумму';
-      if (amt > value) return `Кредит не может превышать стоимость залога (${fmt(value)})`;
-      ask(c, { to: 'banker', title: 'Заявка на кредит', text: `${pname(s, a.by)} просит ${a.kind === 'money' ? fmt(amt) : `${a.count} ${COLOR_RU[a.color!]} акц. (по ${fmt(maxQuote(s, a.color!))} = ${fmt(amt)})`} под залог ${cellName(s, a.cell)} (оценка ${fmt(value)}).`, options: [{ id: 'ok', label: 'Выдать кредит', tone: 'primary' }, { id: 'no', label: 'Отказать', tone: 'danger' }], ctx: { type: 'loanApprove', player: a.by, req: a } });
-      log(c, 'info', `${pname(s, a.by)} обращается в банк за кредитом под залог ${cellName(s, a.cell)}.`, a.by);
-      return;
+      if (value <= 0) return 'Залог ничего не стоит';
+      if (a.kind === 'stocks') {
+        if (!a.color) return 'Выберите цвет акций';
+        const count = loanStockCount(s, value, a.color);
+        if (count < 1) return `Стоимости залога (${fmt(value)}) не хватает даже на одну акцию по ${fmt(maxQuote(s, a.color))}`;
+        return issueLoan(c, { ...a, count, amount: undefined });
+      }
+      return issueLoan(c, { ...a, amount: value, color: undefined, count: undefined });
     }
     case 'repayLoan': {
       const l = s.loans.find((x) => x.id === a.loan);

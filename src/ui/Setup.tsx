@@ -115,7 +115,7 @@ export function SetupScreen() {
       <div className="row join-actions">
         <button className="btn ghost" onClick={() => setScreen('menu')}>← Назад</button>
         <span className="spacer" />
-        <label className="tutor-toggle check" title="Каждый бросает по два кубика: кто выбросит больше — ходит раньше"><input type="checkbox" checked={rollOrder} onChange={(e) => setRollOrder(e.target.checked)} /><span>Разыграть очередь хода</span></label>
+        <label className="tutor-toggle check" title="Каждый бросает один кубик: у кого больше — ходит раньше"><input type="checkbox" checked={rollOrder} onChange={(e) => setRollOrder(e.target.checked)} /><span>Разыграть очередь хода</span></label>
         <TutorToggle />
         <button className="btn gold shine" onClick={start} disabled={mode === 'local' && players.length < 2}>{mode === 'host' ? 'Создать комнату →' : 'Начать партию →'}</button>
       </div>

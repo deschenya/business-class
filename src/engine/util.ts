@@ -97,7 +97,7 @@ export function propValue(s: GameState, pr: Property): number {
   const cell = cellOf(s, pr.cell);
   if (pr.paid > 0) return pr.paid;
   const price = cell.price ?? 0;
-  if (cell.type === 'company') return pr.level === 'plot' ? price / 2 : price;
+  if (cell.type === 'company' || cell.type === 'ru_company') return pr.level === 'plot' ? price / 2 : price;
   return price;
 }
 export const propsOf = (s: GameState, pid: Party) => Object.values(s.props).filter((x) => x.owner === pid);

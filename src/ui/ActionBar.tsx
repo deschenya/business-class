@@ -5,6 +5,7 @@ import { awaitingRoll, assetsValue } from '../engine/engine';
 import { useStore } from '../store';
 import { Avatar, fmt, pn } from './helpers';
 import { StocksDialog, LoanDialog, AuctionDialog, TradeDialog } from './Ops';
+import { promptActor } from './PromptView';
 
 const PIPS: Record<number, number[]> = { 1: [4], 2: [0, 8], 3: [0, 4, 8], 4: [0, 2, 6, 8], 5: [0, 2, 4, 6, 8], 6: [0, 2, 3, 5, 6, 8] };
 export const DieFace = ({ v }: { v: number }) => (
@@ -23,23 +24,20 @@ export function ActionBar({ s, busy }: { s: GameState; busy: boolean }) {
   const claims = s.claims.filter((c) => c.status === 'open');
   const trades = s.trades.filter((t) => t.status === 'proposed' || t.status === 'accepted');
   const over = s.turn.stage === 'over';
+  const myClaims = claims.filter((c) => can(c.owner));
+  const myDebts = debts.filter((d) => can(d.debtor));
   return (
     <>
       <div className="claims">
-        {claims.map((c) => (
-          <div key={c.id} className={`claim glass rent ${can(c.owner) ? 'mine' : ''}`}>
+        {claims.filter((c) => !can(c.owner)).map((c) => (
+          <div key={c.id} className="claim glass rent">
             <span className="dot" style={{ background: s.players.find((p) => p.id === c.owner)?.color }} />
             <span><b>{pn(s, c.payer)}</b> на собственности <b>{pn(s, c.owner)}</b> (№{c.cell}) — аренда {fmt(c.amount)}</span>
-            {can(c.owner) && <button className="btn gold claim-btn shine" onClick={() => dispatch({ type: 'claimRent', by: c.owner, claim: c.id })}>💰 Потребовать {fmt(c.amount)}</button>}
           </div>
         ))}
         {debts.map((d) => (
           <div key={d.id} className="claim glass bad">
             <span><b>{pn(s, d.debtor)}</b> должен {pn(s, d.creditor)} {fmt(d.amount)} — {d.reason}. Деньги {fmt(s.players.find((p) => p.id === d.debtor)!.money)}, имущество {fmt(assetsValue(s, d.debtor))}</span>
-            {can(d.debtor) && <>
-              <button className="btn sm gold" disabled={s.players.find((p) => p.id === d.debtor)!.money < d.amount} onClick={() => dispatch({ type: 'payDebt', by: d.debtor, debt: d.id })}>Оплатить</button>
-              <button className="btn sm danger" onClick={() => dispatch({ type: 'declareBankrupt', by: d.debtor, player: d.debtor })}>Банкротство</button>
-            </>}
           </div>
         ))}
         {trades.map((t) => {
@@ -54,31 +52,32 @@ export function ActionBar({ s, busy }: { s: GameState; busy: boolean }) {
         })}
         {s.auction && <AuctionLive s={s} />}
       </div>
-      <div className="actionbar glass" style={{ ['--c' as any]: cur.color }}>
-        <div className="ab-who">
-          <Avatar s={s} id={cur.id} size={46} />
-          <div>
-            <span className="muted small">{over ? 'Партия окончена' : 'Ходит'}</span>
-            <b>{over && s.winner ? `Победитель: ${pn(s, s.winner)}` : cur.name}</b>
-            {s.exchange && <span className="small chip">на бирже · {s.exchange.mode === 'risk' ? 'риск' : 'простой'}{s.exchange.lane ? ` · клетка ${s.exchange.n}` : ''}</span>}
-            {s.roulette && <span className="small chip">рулетка · кругов {Math.floor(s.roulette.traveled / 12)}</span>}
-          </div>
-        </div>
-        {s.turn.dice && <div className="ab-dice">{s.turn.dice.map((v, i) => <DieFace key={i} v={v} />)}</div>}
+      {/* пока открыто окно выбора, оно стоит внизу экрана вместо кнопок */}
+      {!(!busy && promptActor(s, can as any)) && <div className="actiondock" style={{ ['--c' as any]: cur.color }}>
         <div className="ab-actions">
+          {myClaims.map((c) => (
+            <button key={c.id} className="btn gold claim-btn shine" onClick={() => dispatch({ type: 'claimRent', by: c.owner, claim: c.id })}>
+              💰 Взять аренду {fmt(c.amount)} <span className="ab-sub">с {pn(s, c.payer)}</span>
+            </button>
+          ))}
+          {myDebts.map((d) => (
+            <span key={d.id} className="ab-group">
+              <button className="btn gold big-act" disabled={s.players.find((p) => p.id === d.debtor)!.money < d.amount} onClick={() => dispatch({ type: 'payDebt', by: d.debtor, debt: d.id })}>Оплатить долг {fmt(d.amount)}</button>
+              <button className="btn danger big-act" onClick={() => dispatch({ type: 'declareBankrupt', by: d.debtor, player: d.debtor })}>Банкротство</button>
+            </span>
+          ))}
           {roll && mine && !busy && (
             <button className="btn roll" onClick={() => dispatch({ type: 'roll', by: cur.id })}>
               🎲 {roll === 'order' ? 'Бросить на очерёдность' : roll === 'extra' ? (s.turn.extraOneDie ? 'Дополнительный ход (один кубик)' : 'Дополнительный ход') : roll === 'exchange' ? 'Ход по бирже' : roll === 'roulette' ? 'Крутить рулетку' : s.turn.oneDie || cur.oneDieNext ? 'Бросить один кубик' : 'Бросить кубики'}
             </button>
           )}
           {s.turn.stage === 'post' && !s.turn.extra && mine && !busy && !s.prompts.length && (
-            <button className="btn gold" disabled={debts.some((d) => d.debtor === cur.id)} onClick={() => dispatch({ type: 'endTurn', by: cur.id })}>Завершить ход →</button>
+            <button className="btn gold big-act" disabled={debts.some((d) => d.debtor === cur.id)} onClick={() => dispatch({ type: 'endTurn', by: cur.id })}>Завершить ход →</button>
           )}
-          {!mine && !over && <span className="ab-hint"><span className="spinner sm" />{s.turn.stage === 'order' ? `${cur.name} бросает на очерёдность` : `Ходит ${cur.name} — ждём`}</span>}
-          {mine && !busy && !over && s.prompts.length > 0 && !roll && <span className="ab-hint">Сделайте выбор в окне ↑</span>}
+          {!mine && !over && !myClaims.length && !myDebts.length && <span className="ab-hint glass"><span className="spinner sm" />{s.turn.stage === 'order' ? `${cur.name} бросает на очерёдность` : `Ходит ${cur.name} — ждём`}</span>}
         </div>
         {actor && !busy && (
-          <div className="ab-ops">
+          <div className="ab-ops glass">
             <span className="muted small">{myDebtor ? 'Погашение долга:' : 'До броска:'}</span>
             <button className="btn sm" onClick={() => setDlg('stocks')}>Акции</button>
             <button className="btn sm" onClick={() => setDlg('loan')}>Кредит</button>
@@ -86,12 +85,30 @@ export function ActionBar({ s, busy }: { s: GameState; busy: boolean }) {
             {!myDebtor && <button className="btn sm" onClick={() => setDlg('trade')}>Сделка</button>}
           </div>
         )}
-      </div>
+      </div>}
       {dlg === 'stocks' && actor && <StocksDialog s={s} pid={actor} onClose={() => setDlg(null)} />}
       {dlg === 'loan' && actor && <LoanDialog s={s} pid={actor} onClose={() => setDlg(null)} />}
       {dlg === 'auction' && actor && <AuctionDialog s={s} pid={actor} onClose={() => setDlg(null)} />}
       {dlg === 'trade' && actor && <TradeDialog s={s} pid={actor} onClose={() => setDlg(null)} />}
     </>
+  );
+}
+
+/** Кто ходит — плашка по центру верхней панели. */
+export function TurnWho({ s }: { s: GameState }) {
+  const cur = s.players.find((p) => p.id === s.turn.player)!;
+  const over = s.turn.stage === 'over';
+  return (
+    <div className="turn-who glass" style={{ ['--c' as any]: cur.color }}>
+      <Avatar s={s} id={cur.id} size={30} />
+      <div className="tw-text">
+        <span className="muted small">{over ? 'Партия окончена' : s.turn.stage === 'order' ? 'Бросает на очерёдность' : 'Ходит'}</span>
+        <b>{over && s.winner ? `Победитель: ${pn(s, s.winner)}` : cur.name}</b>
+      </div>
+      {s.exchange && <span className="small chip">биржа · {s.exchange.mode === 'risk' ? 'риск' : 'простой'}{s.exchange.lane ? ` · клетка ${s.exchange.n}` : ''}</span>}
+      {s.roulette && <span className="small chip">рулетка · кругов {Math.floor(s.roulette.traveled / 12)}</span>}
+      {s.turn.dice && <div className="tw-dice">{s.turn.dice.map((v, i) => <DieFace key={i} v={v} />)}</div>}
+    </div>
   );
 }
 

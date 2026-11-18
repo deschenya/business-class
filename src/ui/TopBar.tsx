@@ -4,6 +4,7 @@ import { sceneRef } from './Game';
 import { sfx } from './sound';
 import { NetPanel } from './NetPanel';
 import { tutor, useTutorOn } from './Tutor';
+import { TurnWho } from './ActionBar';
 
 export function TopBar() {
   const { view, setScreen, net, leave, setDemo } = useStore();
@@ -18,6 +19,8 @@ export function TopBar() {
       <button className="btn ghost sm" onClick={exit}>☰ Меню</button>
       <img src="art/logo.webp" className="top-logo" alt="" />
       <span className="top-title">{view.title} · ход {view.turn.n}</span>
+      <div className="spacer" />
+      <TurnWho s={view} />
       <div className="spacer" />
       <div className="seg sm">
         <button onClick={() => sceneRef?.resetView()} title="Обзор">Обзор</button>

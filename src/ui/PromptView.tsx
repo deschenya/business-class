@@ -12,13 +12,21 @@ import { sceneRef } from './Game';
 // при покупке показываем карточку фирмы; подсвечивается то, что сейчас приобретается
 const DEED: Record<string, 'plot' | 'branch' | 'enterprise' | 'buy'> = { buyPlot: 'plot', buyBranch: 'branch', buyEnterprise: 'enterprise', buyRu: 'buy' };
 
+/** Кто на этом устройстве отвечает на текущий вопрос (null — вопроса нет или он не для нас). */
+export function promptActor(s: GameState, can: (by: string) => boolean): string | null {
+  const q = s.prompts[0];
+  if (!q) return null;
+  const target = resolveTarget(s, q.to);
+  const isRole = ['banker', 'broker', 'chairman', 'inspector'].includes(q.to);
+  return can(target) ? target : isRole && can('host') ? 'host' : null;
+}
+
 export function PromptView({ s }: { s: GameState }) {
   const can = useStore((st) => st.can);
   const q = s.prompts[0];
   if (!q) return null;
   const target = resolveTarget(s, q.to);
-  const isRole = ['banker', 'broker', 'chairman', 'inspector'].includes(q.to);
-  const by = can(target) ? target : isRole && can('host') ? 'host' : null;
+  const by = promptActor(s, can as any);
   if (!by) return <div className="waiting glass">Ждём решения: <b>{pn(s, target)}</b> — {q.title}</div>;
   return <PromptCard key={q.id} s={s} q={q} by={by} />;
 }
@@ -62,7 +70,8 @@ function PromptCard({ s, q, by }: { s: GameState; q: Prompt; by: string }) {
             <button key={o.id} className={cls('btn', o.tone === 'primary' && 'gold', o.tone === 'danger' && 'danger', o.tone === 'muted' && 'ghost', o.target && 'has-target')} disabled={o.disabled} onClick={() => answer(o.id)}
               onMouseEnter={(e) => o.target && sceneRef?.preview(o.target, focusAbove(e.currentTarget))} onMouseMove={(e) => o.target && sceneRef?.preview(o.target, focusAbove(e.currentTarget))} onMouseLeave={() => o.target && sceneRef?.preview(null)}
               onFocus={(e) => o.target && sceneRef?.preview(o.target, focusAbove(e.currentTarget))} onBlur={() => o.target && sceneRef?.preview(null)}>
-              {o.label}{o.hint && <small>{o.hint}</small>}
+              <span className="opt-main">{o.label}{o.hint && <small>{o.hint}</small>}</span>
+              {o.price && <span className="opt-price">{o.price}</span>}
             </button>
           ))}
         </div>

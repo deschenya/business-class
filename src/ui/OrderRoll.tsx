@@ -16,7 +16,7 @@ export function OrderPanel({ s }: { s: GameState }) {
   return (
     <div className="order-panel glass">
       <b>🎲 Розыгрыш очерёдности</b>
-      <span className="muted small">Каждый бросает два кубика — кто больше, тот ходит раньше. При равенстве — переброс.</span>
+      <span className="muted small">Каждый бросает один кубик — у кого больше, тот ходит раньше. При равенстве — переброс.</span>
       <div className="order-rows">
         {s.orderRoll.map((r) => {
           const rolling = s.turn.player === r.player;
@@ -27,7 +27,7 @@ export function OrderPanel({ s }: { s: GameState }) {
               <span className="order-name">{pn(s, r.player)}</span>
               <div className="order-dice">
                 {r.rolls.map((d, k) => (
-                  <span key={k} className={`order-throw ${k ? 'reroll' : ''}`}><DieFace v={d[0]} /><DieFace v={d[1]} /><em>{d[0] + d[1]}</em></span>
+                  <span key={k} className={`order-throw ${k ? 'reroll' : ''}`}>{d.map((v, j) => <DieFace key={j} v={v} />)}{d.length > 1 && <em>{d.reduce((a, b) => a + b, 0)}</em>}</span>
                 ))}
                 {rolling && <span className="muted small">бросает…</span>}
               </div>

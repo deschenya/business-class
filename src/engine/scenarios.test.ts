@@ -163,6 +163,21 @@ describe('Бизнес-класс: сценарии', () => {
     expect(P(s, 'p1').pos).toEqual({ z: 'c', id: 50 });
   });
 
+  it('биржа: особая клетка поднимает только цвета, акции которых есть у игрока', () => {
+    let s = newGame();
+    P(s, 'p1').stocks.red = 0;
+    place(s, 'p1', 8);
+    s = roll(s, [1, 1]); // 10 Биржа
+    s = answer(s, 'play');
+    s = answer(s, 'green');
+    s = answer(s, 'simple');
+    s = roll(s, [2, 3]); // 5 — особая клетка
+    const p = P(s, 'p1');
+    expect(p.quotes.green).toBe(15000);
+    expect(p.quotes.yellow).toBe(15000);
+    expect(p.quotes.red).toBe(10000); // красных акций нет — котировка не растёт
+  });
+
   it('7. рискованная карта действует на всех', () => {
     let s = newGame(3);
     s.exchange = { player: 'p1', lane: 'yellow', n: 0, mode: 'risk', origin: { z: 'c', id: 10 }, from66: false, done: false, stops: [] };
@@ -184,9 +199,9 @@ describe('Бизнес-класс: сценарии', () => {
   it('8. залог и истечение срока', () => {
     let s = newGame();
     s.props[3] = { cell: 3, owner: 'p1', level: 'branch', pledged: null, paid: 50000 };
-    s = act(s, { type: 'requestLoan', by: 'p1', cell: 3, kind: 'money', amount: 40000 });
-    s = answer(s, 'ok', undefined, 'host');
-    expect(P(s, 'p1').money).toBe(390000);
+    s = act(s, { type: 'requestLoan', by: 'p1', cell: 3, kind: 'money', amount: 1000 }); // сумма игрока игнорируется
+    expect(P(s, 'p1').money).toBe(400000); // кредит сразу на полную стоимость залога
+    expect(s.loans[0].amount).toBe(50000);
     expect(s.props[3].pledged).toBeTruthy();
     expect(() => act(s, { type: 'requestLoan', by: 'p1', cell: 3, kind: 'money', amount: 1000 })).toThrow();
     // проходим 40 клеток
@@ -240,13 +255,51 @@ describe('Бизнес-класс: сценарии', () => {
     expect(P(s, 'p1').pos).toEqual({ z: 'c', id: 52 });
   });
 
-  it('уточнённые правила: фирма в России за полную цену', () => {
+  it('уточнённые правила: фирма в России — участок ½, филиал ½, аренда — число на клетке', () => {
     let s = newGame();
-    place(s, 'p1', 40);
-    s = roll(s, [1, 1]); // 40→41→42 АЗЛК (цена 100 000)
-    while (s.prompts[0]?.ctx.type === 'route') s = answer(s, s.prompts[0].options.find((o) => !o.label.includes('Старт'))!.id);
+    const toAzlk = (st: GameState) => {
+      place(st, st.turn.player, 40);
+      st = roll(st, [1, 1]); // 40→41→42 АЗЛК (стоимость 100 000, аренда 80 000)
+      while (st.prompts[0]?.ctx.type === 'route') st = answer(st, st.prompts[0].options.find((o) => !o.label.includes('Старт'))!.id);
+      return st;
+    };
+    s = toAzlk(s);
+    expect(s.prompts[0].ctx).toMatchObject({ type: 'buyPlot', cost: 50000 });
+    s = answer(s, 'buy');
+    expect(s.props[42]).toMatchObject({ owner: 'p1', level: 'plot' });
+    expect(P(s, 'p1').money).toBe(300000);
+    s = end(s);
+    s = toAzlk(s); // p2 на участке p1: аренда — число на клетке
+    expect(s.claims.at(-1)).toMatchObject({ payer: 'p2', owner: 'p1', amount: 80000 });
+    s = clear(s); s = end(s);
+    s = toAzlk(s); // p1 снова на своём участке — филиал за вторую половину
+    expect(s.prompts[0].ctx).toMatchObject({ type: 'buyBranch', cost: 50000 });
+    s = answer(s, 'buy');
+    expect(s.props[42].level).toBe('branch');
+    s = end(s);
+    s = toAzlk(s); // с филиала — то же число
+    expect(s.claims.at(-1)).toMatchObject({ payer: 'p2', amount: 80000 });
+  });
+
+  it('супермаркет покупается за деньги, а не бесплатно', () => {
+    let s = newGame();
+    place(s, 'p1', 45);
+    s = roll(s, [1, 1]); // 45→46→47 Супермаркет
     expect(s.prompts[0].ctx.type).toBe('buyRu');
-    expect(s.prompts[0].ctx.cost).toBe(100000);
+    const m = P(s, 'p1').money;
+    s = answer(s, 'buy');
+    expect(m - P(s, 'p1').money).toBe(60000);
+    expect(s.props[47].owner).toBe('p1');
+  });
+
+  it('карточка «Подарок»: освобождение от аренды не действует на участок', () => {
+    let s = newGame();
+    s.props[3] = { cell: 3, owner: 'p2', level: 'plot', pledged: null, paid: 25000 };
+    P(s, 'p1').rentWaivers.push('p2');
+    place(s, 'p1', 1);
+    s = roll(s, [1, 1]); // 3 Nike — участок p2
+    expect(s.prompts.some((q) => q.ctx.type === 'waiver')).toBe(false);
+    expect(P(s, 'p1').rentWaivers).toEqual(['p2']); // карточка сохраняется для филиала/предприятия
   });
 
   it('уточнённые правила: «сосед справа» — следующий по очереди', () => {
@@ -274,14 +327,23 @@ describe('Бизнес-класс: сценарии', () => {
     expect(P(t, 'p1').money).toBe(370000);
   });
 
-  it('розыгрыш очерёдности: игроки бросают сами, по убыванию суммы, равные перебрасывают', () => {
+  it('кредит акциями — сколько целых акций помещается в стоимость залога', () => {
+    let s = newGame();
+    s.props[3] = { cell: 3, owner: 'p1', level: 'branch', pledged: null, paid: 50000 };
+    P(s, 'p2').quotes.red = 15000; // наибольшая котировка красных
+    s = act(s, { type: 'requestLoan', by: 'p1', cell: 3, kind: 'stocks', color: 'red', count: 99 });
+    expect(P(s, 'p1').stocks.red).toBe(1 + 3); // 50 000 / 15 000 = 3 акции
+    expect(s.loans[0].amount).toBe(45000);
+  });
+
+  it('розыгрыш очерёдности: игроки бросают по одному кубику, по убыванию, равные перебрасывают', () => {
     const players = ['А', 'Б', 'В'].map((name) => ({ name, color: '#fff', avatar: '', lady: false }));
     let s = createGame(data, { players, roles: { banker: 'host', broker: 'host', chairman: 'host', inspector: 'host' }, settings: { allowForcedDice: true }, seed: 7 }).state;
     expect(s.turn.stage).toBe('order');
     expect(awaitingRoll(s)).toBe('order');
     expect(() => act(s, { type: 'endTurn', by: s.turn.player })).toThrow();
-    // А: 3+3=6, Б: 5+4=9, В: 2+4=6 → Б первый, А и В перебрасывают: А 1+1, В 6+5 → Б, В, А
-    for (const [who, d] of [['p1', [3, 3]], ['p2', [5, 4]], ['p3', [2, 4]], ['p1', [1, 1]], ['p3', [6, 5]]] as const) {
+    // А: 3, Б: 5, В: 3 → Б первый, А и В перебрасывают: А 1, В 6 → Б, В, А
+    for (const [who, d] of [['p1', [3]], ['p2', [5]], ['p3', [3]], ['p1', [1]], ['p3', [6]]] as const) {
       expect(s.turn.player).toBe(who);
       s = act(s, { type: 'roll', by: who, force: [...d] });
     }

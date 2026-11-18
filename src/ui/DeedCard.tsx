@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { GameState, Level } from '../engine/types';
+import { ruRent } from '../engine/engine';
 import { STOCK_HEX, fmt } from './helpers';
 
 /** Карточка собственности: логотип фирмы из оригинального набора + цены и аренда. */
@@ -30,7 +31,13 @@ export function DeedCard({ s, cell, highlight }: { s: GameState; cell: number; h
             {row('предприятие', c.rent.enterprise, highlight === 'enterprise')}
           </>
         )}
-        {c.type === 'ru_company' && (<>{row('Цена', c.price, true)}{row('Аренда владельцу', c.rentSingle)}</>)}
+        {c.type === 'ru_company' && (
+          <>
+            {row('Стоимость', c.price)}
+            {row('участок / филиал', c.price ? c.price / 2 : 0)}
+            {row('Аренда владельцу', ruRent(c, 'branch'), highlight === 'plot' || highlight === 'branch' || highlight === 'firm')}
+          </>
+        )}
         {c.type === 'supermarket' && (<>{row('Покупка', c.price, true)}{row('Плата с посетителя', c.fee)}{row('Налог владельца', c.ownerTax)}</>)}
         {(c.проверить || c.требует_оцифровки) && <div className="warn small">⚠ {c.проверить || c.требует_оцифровки}</div>}
       </div>

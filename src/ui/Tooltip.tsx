@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef, useState } from 'react';
 import type { GameState } from '../engine/types';
 import { COLOR_RU_PL, LEVEL_RU } from '../engine/types';
+import { ruRent } from '../engine/engine';
 import type { HoverInfo } from '../three/TableScene';
 import { STOCK_HEX, fmt, pn } from './helpers';
 
@@ -45,7 +46,7 @@ export function Tooltip({ s, h, pinned, onClose }: { s: GameState; h: HoverInfo;
         {c.type === 'ru_company' && (
           <>
             <img className="tt-firm" src={`res/firms/${c.id}.webp`} onError={(e) => ((e.target as HTMLImageElement).style.display = 'none')} alt="" />
-            <div className="tt-grid"><span>{c.kind}</span><b /><span>Цена</span><b>{fmt(c.price ?? 0)}</b><span>Аренда владельцу</span><b>{fmt(c.rentSingle ?? 0)}</b></div>
+            <div className="tt-grid"><span>{c.kind}</span><b /><span>Стоимость</span><b>{fmt(c.price ?? 0)}</b><span>Участок / филиал</span><b>{fmt((c.price ?? 0) / 2)}</b><span>Аренда владельцу</span><b>{fmt(ruRent(c, 'branch'))}</b></div>
           </>
         )}
         {c.type === 'win' && <p>Остановка: +{fmt(c.amount ?? 0)} из банка</p>}

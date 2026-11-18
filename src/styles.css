@@ -20,6 +20,11 @@
 * { box-sizing: border-box; }
 html, body, #root { margin: 0; height: 100%; overflow: hidden; }
 body { background: var(--bg); -webkit-font-smoothing: antialiased; }
+/* Игра, а не сайт: текст не выделяется, картинки не перетаскиваются, нет подсветки тапа,
+   «резиновой» прокрутки, долгого нажатия с меню и зума двойным тапом. Поля ввода работают как обычно. */
+html, body { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; overscroll-behavior: none; touch-action: manipulation; cursor: default; }
+img, canvas, svg { -webkit-user-drag: none; }
+input, textarea, [contenteditable="true"] { user-select: text; -webkit-user-select: text; -webkit-touch-callout: default; }
 h1, h2, h3, h4 { font-family: 'Playfair Display', Georgia, serif; margin: 0 0 8px; letter-spacing: 0.01em; }
 h1 { font-size: 26px; } h2 { font-size: 19px; color: var(--gold2); } h3 { font-size: 20px; } h4 { font-size: 15px; color: var(--gold2); margin-top: 14px; }
 input, select, textarea, button { font: inherit; color: inherit; }
@@ -50,6 +55,11 @@ code { font-size: 11px; color: #d7c8a8; }
 .btn.big { padding: 13px 22px; font-size: 16px; border-radius: 12px; }
 .btn.sm { padding: 5px 10px; font-size: 12.5px; border-radius: 8px; }
 .btn small { display: block; font-size: 10.5px; opacity: .7; font-weight: 500; }
+/* вариант ответа: название и пояснение мелко снизу слева, цена — справа */
+.prompt-options .btn { width: 100%; }
+.btn .opt-main { display: flex; flex-direction: column; align-items: flex-start; min-width: 0; flex: 1; }
+.btn .opt-main small { margin-top: 2px; font-size: 11.5px; line-height: 1.35; }
+.btn .opt-price { margin-left: auto; padding-left: 12px; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; color: #ffb3a6; }
 .btn.online { border-color: var(--good); color: var(--good); }
 .btn.roll { font-size: 17px; padding: 12px 26px; background: linear-gradient(180deg, #fff7e6, #e8d2a6); color: #2a1a07; border-color: #fff; box-shadow: 0 0 0 0 rgba(255, 220, 140, .7); animation: glow 1.8s infinite; }
 @keyframes glow { 0% { box-shadow: 0 0 0 0 rgba(255,220,140,.55); } 70% { box-shadow: 0 0 0 14px rgba(255,220,140,0); } 100% { box-shadow: 0 0 0 0 rgba(255,220,140,0); } }
@@ -190,18 +200,28 @@ code { font-size: 11px; color: #d7c8a8; }
 .host-tab .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 6px; }
 .host-tab .row { margin: 6px 0; }
 
-.actionbar { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); display: flex; align-items: center; gap: 18px; padding: 10px 16px; z-index: 6; border-top: 2px solid var(--c); flex-wrap: wrap; justify-content: center; max-width: calc(100vw - 24px); }
-.ab-who { display: flex; align-items: center; gap: 10px; }
-.ab-who > div { display: flex; flex-direction: column; }
-.ab-who b { font-size: 17px; font-family: 'Playfair Display', serif; }
-.ab-dice { display: flex; gap: 6px; }
-.die-face { width: 34px; height: 34px; background: linear-gradient(145deg, #fffaf0, #e2d6bd); border-radius: 8px; display: grid; grid-template-columns: repeat(3, 1fr); padding: 5px; gap: 1px; box-shadow: inset 0 -2px 0 rgba(0,0,0,.15), 0 3px 8px rgba(0,0,0,.4); animation: pop .35s; }
+.die-face { width: 34px; height: 34px; background: linear-gradient(145deg, #fffaf0, #e2d6bd); border-radius: 8px; display: grid; grid-template-columns: repeat(3, 1fr); padding: 5px; gap: 1px; box-shadow: inset 0 -2px 0 rgba(0,0,0,.15), 0 3px 8px rgba(0,0,0,.4); }
 .die-face i { border-radius: 50%; }
 .die-face i.on { background: radial-gradient(circle at 40% 35%, #444, #000); }
-@keyframes pop { 0% { transform: scale(.6) rotate(-20deg); } 100% { transform: none; } }
-.ab-actions { display: flex; gap: 10px; align-items: center; }
-.ab-ops { display: flex; gap: 6px; align-items: center; padding-left: 14px; border-left: 1px solid var(--line); }
-.claims { position: absolute; left: 50%; transform: translateX(-50%); bottom: 100px; display: flex; flex-direction: column; gap: 6px; z-index: 6; align-items: center; max-width: min(900px, calc(100vw - 700px)); min-width: 420px; }
+/* кто ходит — по центру верхней панели */
+.turn-who { display: flex; align-items: center; gap: 10px; padding: 5px 14px 5px 6px; border-radius: 99px; border: 1px solid var(--line); border-bottom: 2px solid var(--c); min-width: 0; }
+.turn-who .tw-text { display: flex; flex-direction: column; line-height: 1.15; min-width: 0; }
+.turn-who .tw-text b { font-size: 16px; font-family: 'Playfair Display', serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.turn-who .tw-text .small { font-size: 10.5px; text-transform: uppercase; letter-spacing: .08em; }
+.turn-who .chip { margin-left: 0; white-space: nowrap; }
+.tw-dice { display: flex; gap: 4px; }
+.tw-dice .die-face { width: 24px; height: 24px; padding: 3px; border-radius: 6px; }
+/* внизу — кнопки действий, под ними отдельная полоска «До броска» */
+.actiondock { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 8px; z-index: 6; max-width: calc(100vw - 24px); pointer-events: none; }
+.actiondock > * { pointer-events: auto; }
+.ab-actions { display: flex; gap: 10px; align-items: center; justify-content: center; flex-wrap: wrap; }
+.ab-actions:empty { display: none; }
+.ab-group { display: inline-flex; gap: 10px; }
+.btn.big-act { font-size: 16px; padding: 12px 24px; border-radius: 12px; }
+.ab-sub { font-size: 13px; font-weight: 600; opacity: .75; margin-left: 4px; }
+.ab-ops { display: flex; gap: 6px; align-items: center; padding: 6px 10px; border-radius: 12px; }
+.ab-hint.glass { padding: 9px 16px; border-radius: 12px; }
+.claims { position: absolute; left: 50%; transform: translateX(-50%); bottom: 132px; display: flex; flex-direction: column; gap: 6px; z-index: 6; align-items: center; max-width: min(900px, calc(100vw - 700px)); min-width: 420px; }
 .claim { display: flex; align-items: center; gap: 8px; padding: 8px 12px; font-size: 13px; flex-wrap: wrap; animation: slideUp .3s; }
 .claim.bad { border-color: rgba(255,107,91,.5); }
 .claim.auction { border-color: var(--gold); }
@@ -209,7 +229,7 @@ code { font-size: 11px; color: #d7c8a8; }
 @keyframes slideUp { from { opacity: 0; transform: translateY(12px); } }
 
 .waiting { position: absolute; top: 64px; left: 50%; transform: translateX(-50%); padding: 8px 16px; z-index: 6; font-size: 13px; }
-.prompt-wrap { position: absolute; inset: 0; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 104px; z-index: 8; pointer-events: none; }
+.prompt-wrap { position: absolute; inset: 0; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 14px; z-index: 8; pointer-events: none; }
 .prompt { pointer-events: auto; width: min(560px, calc(100vw - 32px)); padding: 20px 22px; border-top: 3px solid var(--c); animation: promptIn .35s cubic-bezier(.2,1.3,.4,1); max-height: 80vh; overflow: auto; }
 @keyframes promptIn { from { opacity: 0; transform: translateY(20px) scale(.96); } }
 .prompt-who { font-size: 11px; text-transform: uppercase; letter-spacing: .12em; color: var(--c, var(--gold)); font-weight: 800; margin-bottom: 4px; }
@@ -304,7 +324,7 @@ textarea.json { width: 100%; height: 60vh; font-family: monospace; font-size: 12
 @media (max-width: 1250px) {
   .side { width: 320px; }
   .players { width: 250px; }
-  .claims { max-width: calc(100vw - 40px); min-width: 0; bottom: 150px; }
+  .claims { max-width: calc(100vw - 40px); min-width: 0; bottom: 170px; }
   .demo-caption { max-width: calc(100vw - 40px); min-width: 0; top: 100px; }
 }
 @media (max-width: 900px) {

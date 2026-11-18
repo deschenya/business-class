@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { Bundle, Color, GameState, PlayerId } from '../engine/types';
 import { COLORS, COLOR_RU, COLOR_RU_PL, LEVEL_RU } from '../engine/types';
-import { maxQuote, propValue } from '../engine/engine';
+import { loanStockCount, maxQuote, propValue } from '../engine/engine';
 import { useStore } from '../store';
 import { STOCK_HEX, STOCK_IMG, fmt, pn } from './helpers';
 
@@ -49,32 +49,30 @@ export function LoanDialog({ s, pid, onClose }: { s: GameState; pid: PlayerId; o
   const [kind, setKind] = useState<'money' | 'stocks'>('money');
   const pr = s.props[cell];
   const value = pr ? propValue(s, pr) : 0;
-  const [amount, setAmount] = useState(Math.floor(value / 1000) * 1000);
   const [color, setColor] = useState<Color>('red');
-  const [count, setCount] = useState(1);
+  const count = loanStockCount(s, value, color);
   const loans = s.loans.filter((l) => l.player === pid && l.status === 'active');
   const p = s.players.find((x) => x.id === pid)!;
   return (
     <Modal title="Кредит в банке под залог" onClose={onClose}>
-      <p className="muted small">Сумма не выше стоимости залога. Срок — один полный проход большого или малого периметра. Карточка хранится в банке, метка остаётся на поле. Выдаёт банкир.</p>
+      <p className="muted small">Кредит выдаётся на полную стоимость залога. Срок — один полный проход большого или малого периметра. Карточка хранится в банке, метка остаётся на поле.</p>
       {free.length === 0 ? <p>Нет свободной собственности для залога.</p> : (
         <>
           <label className="field"><span>Залог</span>
-            <select value={cell} onChange={(e) => { const c = Number(e.target.value); setCell(c); setAmount(Math.floor(propValue(s, s.props[c]) / 1000) * 1000); }}>
+            <select value={cell} onChange={(e) => setCell(Number(e.target.value))}>
               {free.map((x) => <option key={x.cell} value={x.cell}>№{x.cell} {s.data.board.cells.find((c) => c.id === x.cell)?.name} — {LEVEL_RU[x.level]}, оценка {fmt(propValue(s, x))}</option>)}
             </select>
           </label>
           <div className="seg"><button className={kind === 'money' ? 'on' : ''} onClick={() => setKind('money')}>Деньгами</button><button className={kind === 'stocks' ? 'on' : ''} onClick={() => setKind('stocks')}>Акциями</button></div>
           {kind === 'money' ? (
-            <label className="field"><span>Сумма</span><input type="number" step={1000} max={value} value={amount} onChange={(e) => setAmount(Number(e.target.value))} /><em>макс. {fmt(value)}</em></label>
+            <p className="field"><span>Сумма</span><b>{fmt(value)}</b></p>
           ) : (
             <div className="row">
               <select value={color} onChange={(e) => setColor(e.target.value as Color)}>{COLORS.map((c) => <option key={c} value={c}>{COLOR_RU_PL[c]} ({fmt(maxQuote(s, c))})</option>)}</select>
-              <input type="number" min={1} value={count} onChange={(e) => setCount(Number(e.target.value))} style={{ width: 70 }} />
-              <em>= {fmt(maxQuote(s, color) * count)} по наибольшей котировке</em>
+              <em>{count > 0 ? `${count} акц. × ${fmt(maxQuote(s, color))} = ${fmt(maxQuote(s, color) * count)} по наибольшей котировке` : 'стоимости залога не хватает даже на одну акцию'}</em>
             </div>
           )}
-          <button className="btn gold" onClick={() => { dispatch(kind === 'money' ? { type: 'requestLoan', by: pid, cell, kind, amount } : { type: 'requestLoan', by: pid, cell, kind, color, count }); onClose(); }}>Подать заявку банкиру</button>
+          <button className="btn gold" disabled={kind === 'stocks' && count < 1} onClick={() => { dispatch(kind === 'money' ? { type: 'requestLoan', by: pid, cell, kind } : { type: 'requestLoan', by: pid, cell, kind, color }); onClose(); }}>Взять кредит</button>
         </>
       )}
       {loans.length > 0 && <h4>Действующие кредиты</h4>}
