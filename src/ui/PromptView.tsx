@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { Color, GameState, Prompt } from '../engine/types';
 import { COLORS, COLOR_RU, COLOR_RU_PL } from '../engine/types';
 import { resolveTarget } from '../engine/util';
@@ -23,8 +23,22 @@ export function PromptView({ s }: { s: GameState }) {
   return <PromptCard key={q.id} s={s} q={q} by={by} />;
 }
 
+/** Середина видимой области между верхней панелью и верхним краем окна выбора (px от верха экрана). */
+const focusAbove = (el: Element) => {
+  const top = (el.closest('.prompt') ?? el).getBoundingClientRect().top;
+  return Math.max(120, (64 + top) / 2);
+};
+
 function PromptCard({ s, q, by }: { s: GameState; q: Prompt; by: string }) {
-  useEffect(() => () => sceneRef?.preview(null), []); // вопрос закрыт — вернуть камеру и убрать подсветку
+  const cardRef = useRef<HTMLDivElement>(null);
+  // пока окно открыто — фокус камеры над окном; закрыто — обычный кадр и без подсветки
+  useEffect(() => {
+    const place = () => cardRef.current && sceneRef?.setFocusY(focusAbove(cardRef.current));
+    place();
+    const t = setTimeout(place, 400); // после анимации появления окна
+    window.addEventListener('resize', place);
+    return () => { clearTimeout(t); window.removeEventListener('resize', place); sceneRef?.preview(null); sceneRef?.setFocusY(null); };
+  }, []);
   const dispatch = useStore((st) => st.dispatch);
   const [payload, setPayload] = useState<any>({});
   const [err, setErr] = useState<string | null>(null);
@@ -35,7 +49,7 @@ function PromptCard({ s, q, by }: { s: GameState; q: Prompt; by: string }) {
   if (f?.kind === 'pickCard') return <CardFan s={s} q={q} onPick={(i) => (f.faceUp ? answer(String(i)) : answer('pick', { index: i }))} color={color} />;
   return (
     <div className="prompt-wrap">
-      <div className="prompt glass" style={{ ['--c' as any]: color }}>
+      <div className="prompt glass" ref={cardRef} style={{ ['--c' as any]: color }}>
         <div className="prompt-who">{pn(s, who)}{['banker', 'broker', 'chairman', 'inspector'].includes(q.to) ? ` · ${q.to === 'banker' ? 'банкир' : q.to === 'broker' ? 'брокер' : q.to === 'chairman' ? 'председатель' : 'инспектор'}` : ''}</div>
         <h3>{q.title}</h3>
         {q.text && <p className="prompt-text">{q.text}</p>}
@@ -46,8 +60,8 @@ function PromptCard({ s, q, by }: { s: GameState; q: Prompt; by: string }) {
         <div className="prompt-options">
           {q.options.map((o) => (
             <button key={o.id} className={cls('btn', o.tone === 'primary' && 'gold', o.tone === 'danger' && 'danger', o.tone === 'muted' && 'ghost', o.target && 'has-target')} disabled={o.disabled} onClick={() => answer(o.id)}
-              onMouseEnter={() => o.target && sceneRef?.preview(o.target)} onMouseMove={() => o.target && sceneRef?.preview(o.target)} onMouseLeave={() => o.target && sceneRef?.preview(null)}
-              onFocus={() => o.target && sceneRef?.preview(o.target)} onBlur={() => o.target && sceneRef?.preview(null)}>
+              onMouseEnter={(e) => o.target && sceneRef?.preview(o.target, focusAbove(e.currentTarget))} onMouseMove={(e) => o.target && sceneRef?.preview(o.target, focusAbove(e.currentTarget))} onMouseLeave={() => o.target && sceneRef?.preview(null)}
+              onFocus={(e) => o.target && sceneRef?.preview(o.target, focusAbove(e.currentTarget))} onBlur={() => o.target && sceneRef?.preview(null)}>
               {o.label}{o.hint && <small>{o.hint}</small>}
             </button>
           ))}

@@ -199,8 +199,24 @@ export class TableScene {
     this.labels.setSize(w, h);
     this.composer.setSize(w, h);
     this.camera.aspect = w / h;
-    this.camera.updateProjectionMatrix();
+    this.applyViewShift();
   };
+  /** Сдвиг кадра по вертикали (px): точка, на которую смотрит камера, оказывается выше центра экрана —
+   *  в видимой области над окном выбора. 0 — обычный кадр. */
+  private viewDy = 0;
+  private viewDyGoal = 0;
+  private baseDy = 0; // сдвиг, пока открыто окно выбора
+  /** Открыто окно выбора: точку фокуса камеры показывать на высоте focusY (px от верха); null — обычный кадр. */
+  setFocusY(focusY: number | null) {
+    this.baseDy = focusY === null ? 0 : Math.max(0, this.host.clientHeight / 2 - focusY);
+    if (!this.previewRing.visible) this.viewDyGoal = this.baseDy;
+  }
+  private applyViewShift() {
+    const w = this.host.clientWidth, h = this.host.clientHeight;
+    if (Math.abs(this.viewDy) < 0.5) this.camera.clearViewOffset();
+    else this.camera.setViewOffset(w, h, 0, this.viewDy, w, h);
+    this.camera.updateProjectionMatrix();
+  }
 
   private lights() {
     const hemi = new THREE.HemisphereLight(0xfff1dc, 0x2a1a10, 0.45);
@@ -785,7 +801,9 @@ export class TableScene {
   }
   /** Предпросмотр клетки (наведение на вариант выбора): камера к клетке + подсветка; null — вернуться к фишке. */
   private previewKey = '';
-  preview(pos: Pos | null) {
+  preview(pos: Pos | null, focusY?: number) {
+    // клетку показываем в видимой части экрана (над окном выбора), а не под ним
+    this.viewDyGoal = pos && focusY !== undefined ? Math.max(0, this.host.clientHeight / 2 - focusY) : this.baseDy;
     if (pos) {
       const key = JSON.stringify(pos);
       if (key === this.previewKey && this.previewRing.visible) return; // уже показываем эту клетку
@@ -929,6 +947,11 @@ export class TableScene {
     const pulse = 0.6 + Math.sin(t * 3.2) * 0.25;
     (this.activeRing.material as THREE.MeshBasicMaterial).opacity = pulse;
     this.activeRing.rotation.y = t * 0.6;
+    if (Math.abs(this.viewDy - this.viewDyGoal) > 0.5) {
+      this.viewDy += (this.viewDyGoal - this.viewDy) * Math.min(1, dt * 10);
+      if (Math.abs(this.viewDy - this.viewDyGoal) <= 0.5) this.viewDy = this.viewDyGoal;
+      this.applyViewShift();
+    }
     this.direction(dt);
     this.controls.update();
     // толчок камеры поверх итогового положения (после update, чтобы не сбивать OrbitControls)
