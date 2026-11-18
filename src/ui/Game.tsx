@@ -11,6 +11,7 @@ import { TopBar } from './TopBar';
 import type { GameEvent, GameState } from '../engine/types';
 import { PawnIcon } from './helpers';
 import { TutorCard } from './Tutor';
+import { OrderRoll } from './OrderRoll';
 import { sfx } from './sound';
 
 export let sceneRef: TableScene | null = null;
@@ -76,6 +77,7 @@ export function GameScreen() {
       <CardReveal s={view} />
       {(pinned || hover) && <Tooltip s={view} h={(pinned || hover)!} pinned={!!pinned} onClose={() => setPinned(null)} />}
       <SeatPicker s={view} />
+      <OrderRoll key={view.id} s={view} />
       <TutorCard s={view} busy={busy} />
       <TurnBanner s={view} busy={busy} />
       {demo && <div className="demo-caption glass"><b>Демо {demo.step}/{demo.total}</b> {demo.caption}</div>}

@@ -32,7 +32,7 @@ const UP = new THREE.Vector3(0, 1, 0);
  */
 export const CAM = {
   // бросок кубиков: наезд на лоток, к остановке — почти сверху, чтобы читались грани
-  diceR0: 9.2, diceRMin: 6.6, diceRMax: 10.2, dicePhi0: 0.66, dicePhi1: 0.5, diceTh: 0.32, diceHold: 0.3,
+  diceR0: 11.5, diceRMin: 8.6, diceRMax: 12.5, dicePhi0: 0.66, dicePhi1: 0.5, diceTh: 0.32, diceHold: 0.3,
   diceSpeed: 1.25, // ускорение проигрывания броска
   // проводка фишки
   moveR: 10.6, moveRSmall: 7.4, movePhi: 0.74, movePhiSmall: 0.6,
@@ -322,7 +322,8 @@ export class TableScene {
       const first = this.lastTurnKey === '';
       this.lastTurnKey = turnKey;
       // ход перешёл к другому игроку — камера к его фишке (только «Следить»)
-      if (!first) { this.userGrab = false; queueMicrotask(() => this.focusPawn(s.turn.player)); }
+      // в начале партии и при смене хода — камера к фишке того, кто ходит (только «Следить»)
+      if (!first || s.turn.n === 1) { this.userGrab = false; queueMicrotask(() => this.focusPawn(s.turn.player)); }
     }
     if (!this.loaded) return; // фишки создаём только после загрузки моделей
     const groups = new Map<string, PlayerId[]>();

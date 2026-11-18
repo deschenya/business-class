@@ -183,6 +183,8 @@ export interface GameState {
   rng: number;
   seq: number;
   winner: PlayerId | null;
+  /** результаты розыгрыша очерёдности: броски каждого игрока (с перебросами при равенстве) */
+  orderRoll?: { player: PlayerId; rolls: number[][] }[];
 }
 
 // ---------------------------------------------------------------- события для анимации

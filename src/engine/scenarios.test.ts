@@ -11,7 +11,7 @@ const data: GameData = {
 
 function newGame(n = 2): GameState {
   const players = Array.from({ length: n }, (_, i) => ({ name: ['Анна', 'Борис', 'Вера', 'Глеб'][i], color: '#fff', avatar: '', lady: i === 0 || i === 2 }));
-  let s = createGame(data, { players, roles: { banker: 'host', broker: 'host', chairman: 'host', inspector: 'host' }, settings: { allowForcedDice: true }, seed: 42 }).state;
+  let s = createGame(data, { players, roles: { banker: 'host', broker: 'host', chairman: 'host', inspector: 'host' }, settings: { allowForcedDice: true }, seed: 42, keepOrder: true }).state;
   // фиксируем очерёдность p1, p2, ...
   s.order = s.players.map((p) => p.id);
   s.turn.player = 'p1';
@@ -28,6 +28,27 @@ const answer = (s: GameState, option: string, payload?: any, by?: any) => {
   return act(s, { type: 'answer', by: by ?? (q.to.startsWith('p') ? q.to : 'host'), prompt: q.id, option, payload });
 };
 const roll = (s: GameState, d: number[]) => act(s, { type: 'roll', by: s.turn.player, force: d });
+/** Закрыть все вопросы «по умолчанию» (отказ/первый вариант, валидные данные для форм) — между ходами в сценариях. */
+function clear(s: GameState): GameState {
+  for (let k = 0; k < 20 && s.prompts.length; k++) {
+    const q = s.prompts[0];
+    const f = q.form;
+    const payload = !f ? undefined
+      : f.kind === 'pickCard' ? { index: 0 }
+      : f.kind === 'stockCounts' ? { counts: { red: f.total, yellow: 0, green: 0, blue: 0 } }
+      : f.kind === 'distribute' ? { amounts: Object.fromEntries(f.players!.map((pl, i) => [pl, i === 0 ? f.total : 0])) }
+      : f.kind === 'assignColors' ? { colors: ['red', 'yellow', 'green', 'blue'].slice(0, f.values!.length) }
+      : f.kind === 'amount' ? { amount: 0 }
+      : f.kind === 'pickPlayer' ? { player: f.players![0] }
+      : f.kind === 'pickCell' ? { cell: f.cells![0], player: f.players?.[0] }
+      : undefined;
+    const opts = q.options.filter((o) => !o.disabled);
+    const pref = ['skip', 'pass', 'stay', 'move', 'default', 'no', 'more', 'none'];
+    const option = f?.kind === 'pickCard' ? (f.faceUp ? '0' : 'pick') : (opts.find((o) => pref.includes(o.id)) ?? opts[0] ?? q.options[0]).id;
+    s = act(s, { type: 'answer', by: (q.to.startsWith('p') ? q.to : 'host') as any, prompt: q.id, option, payload });
+  }
+  return s;
+}
 const end = (s: GameState) => act(s, { type: 'endTurn', by: s.turn.player });
 const P = (s: GameState, id: string) => s.players.find((p) => p.id === id)!;
 const place = (s: GameState, id: string, cell: number) => { P(s, id).pos = { z: 'c', id: cell }; return s; };
@@ -50,7 +71,7 @@ describe('Бизнес-класс: сценарии', () => {
     s = answer(s, 'buy');
     expect(P(s, 'p1').money).toBe(350000 - 25000);
     expect(s.props[3]).toMatchObject({ owner: 'p1', level: 'plot' });
-    s = end(s); s = roll(s, [1, 1]); if (s.prompts.length) s = answer(s, s.prompts[0].options.at(-1)!.id); s = end(s);
+    s = end(s); s = roll(s, [1, 1]); s = clear(s); s = end(s);
     place(s, 'p1', 0);
     s = roll(s, [1, 2]);
     expect(s.prompts[0].ctx.type).toBe('buyBranch');
@@ -81,7 +102,7 @@ describe('Бизнес-класс: сценарии', () => {
     expect(P(s, 'p1').money).toBe(350000 - 14000);
     expect(P(s, 'p2').money).toBe(350000 + 14000);
     // второй случай: владелец не успел до броска следующего игрока
-    s = end(s); s = roll(s, [3, 4]); if (s.prompts.length) s = answer(s, s.prompts[0].options.at(-1)!.id); s = end(s);
+    s = end(s); s = roll(s, [3, 4]); s = clear(s); s = end(s);
     place(s, 'p3', 0);
     s = roll(s, [1, 2]); // p3 на 3
     const c2 = s.claims.find((c) => c.status === 'open')!;
@@ -100,7 +121,7 @@ describe('Бизнес-класс: сценарии', () => {
     s = answer(s, 'switch');
     expect(P(s, 'p1').pos).toEqual({ z: 'c', id: 52 });
     expect(P(s, 'p1').money).toBe(375000);
-    s = end(s); s = roll(s, [1, 1]); if (s.prompts.length) s = answer(s, s.prompts[0].options.at(-1)!.id); s = end(s);
+    s = end(s); s = roll(s, [1, 1]); s = clear(s); s = end(s);
     // въезд через таможню 31→40
     place(s, 'p1', 29);
     const m0 = P(s, 'p1').money;
@@ -111,7 +132,7 @@ describe('Бизнес-класс: сценарии', () => {
     expect(P(s, 'p1').pos).toEqual({ z: 'c', id: 40 });
     expect(m0 - P(s, 'p1').money).toBe(10000);
     // выезд 40→Старт с одной недвижимостью в России
-    s = end(s); s = roll(s, [1, 1]); if (s.prompts.length) s = answer(s, s.prompts[0].options.at(-1)!.id); s = end(s);
+    s = end(s); s = roll(s, [1, 1]); s = clear(s); s = end(s);
     s.props[42] = { cell: 42, owner: 'p1', level: 'firm', pledged: null, paid: 50000 };
     place(s, 'p1', 40);
     const m1 = P(s, 'p1').money;
@@ -251,6 +272,24 @@ describe('Бизнес-класс: сценарии', () => {
     place(t, 'p1', 37);
     t = roll(t, [1, 2]); // 37 → 0
     expect(P(t, 'p1').money).toBe(370000);
+  });
+
+  it('розыгрыш очерёдности: два кубика, по убыванию суммы, равные перебрасывают', () => {
+    for (let seed = 1; seed <= 40; seed++) {
+      const players = ['А', 'Б', 'В', 'Г'].map((name) => ({ name, color: '#fff', avatar: '', lady: false }));
+      const s = createGame(data, { players, roles: { banker: 'host', broker: 'host', chairman: 'host', inspector: 'host' }, seed }).state;
+      expect(s.orderRoll?.length).toBe(4);
+      expect(new Set(s.order).size).toBe(4);
+      expect(s.turn.player).toBe(s.order[0]);
+      const first = (id: string) => s.orderRoll!.find((r) => r.player === id)!.rolls[0];
+      const sum = (d: number[]) => d[0] + d[1];
+      // по первым броскам порядок не возрастает; при равенстве решает переброс
+      for (let k = 1; k < 4; k++) expect(sum(first(s.order[k - 1]))).toBeGreaterThanOrEqual(sum(first(s.order[k])));
+      for (const r of s.orderRoll!) for (const d of r.rolls) { expect(d.length).toBe(2); d.forEach((v) => expect(v >= 1 && v <= 6).toBe(true)); }
+    }
+    const off = createGame(data, { players: [{ name: 'А', color: '#fff', avatar: '', lady: false }, { name: 'Б', color: '#fff', avatar: '', lady: false }], roles: { banker: 'host', broker: 'host', chairman: 'host', inspector: 'host' }, rollOrder: false }).state;
+    expect(off.order).toEqual(['p1', 'p2']);
+    expect(off.orderRoll).toBeUndefined();
   });
 
   it('демо-журнал расчётов ведётся', () => {

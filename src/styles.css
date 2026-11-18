@@ -481,3 +481,26 @@ textarea.json { width: 100%; height: 60vh; font-family: monospace; font-size: 12
 .advanced-mini[open] summary { margin-bottom: 6px; color: var(--gold2); }
 .advanced-mini .field.small { grid-template-columns: 1fr 160px; }
 .join-actions { gap: 10px; }
+
+/* ------------------------------------------------ розыгрыш очерёдности */
+.order-check { padding: 6px 2px; font-weight: 600; font-size: 13.5px; }
+.order-back { position: absolute; inset: 0; z-index: 12; display: grid; place-items: center; background: rgba(0,0,0,.5); backdrop-filter: blur(2px); animation: fadeIn .25s; }
+.order { width: min(560px, 94vw); padding: 20px 22px; display: flex; flex-direction: column; gap: 10px; background: rgba(22,15,10,.95); animation: promptIn .35s; }
+.order h3 { margin: 0; }
+.order p { margin: 0; }
+.order-rows { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
+.order-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; background: rgba(255,255,255,.04); border: 1px solid transparent; transition: border-color .2s, background .2s; }
+.order-row.rolling { border-color: var(--gold); background: rgba(217,180,90,.1); }
+.order-row.first { border-color: var(--gold); box-shadow: 0 0 20px rgba(217,180,90,.25); }
+.order-name { min-width: 90px; }
+.order-dice { display: flex; gap: 10px; flex-wrap: wrap; flex: 1; }
+.order-throw { display: inline-flex; align-items: center; gap: 4px; animation: pop .3s; }
+.order-throw .die-face { width: 26px; height: 26px; padding: 4px; }
+.order-throw em { font-style: normal; font-weight: 800; color: var(--gold2); margin-left: 4px; font-variant-numeric: tabular-nums; }
+.order-throw.reroll { opacity: .95; }
+.order-throw.reroll::before { content: 'переброс'; font-size: 10px; color: var(--muted); margin-right: 2px; }
+.order-throw.spinning .die-face { animation: shakeDie .14s infinite; }
+@keyframes shakeDie { 50% { transform: rotate(14deg) translateY(-2px); } }
+.order-place { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; background: rgba(217,180,90,.2); color: var(--gold2); animation: pop .35s; }
+.order-result { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 6px; flex-wrap: wrap; font-weight: 600; animation: fadeUp .3s; }
+.order-skip { align-self: flex-end; }

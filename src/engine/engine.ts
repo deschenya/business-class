@@ -18,7 +18,8 @@ export interface Setup {
   roles: Record<RoleId, number | 'host'>; // индекс игрока или ведущий
   settings?: Partial<Settings>;
   seed?: number;
-  keepOrder?: boolean; // очерёдность задаёт ведущий (демо/тесты)
+  keepOrder?: boolean; // очерёдность задаёт ведущий (тесты)
+  rollOrder?: boolean; // разыграть очередь хода двумя кубиками (по умолчанию да)
 }
 
 export const DEFAULT_SETTINGS: Settings = { startMoney: 350000, startQuote: 10000, startStocks: 1, rentNeedsClaim: true, allowForcedDice: false };
@@ -46,20 +47,23 @@ export function createGame(data: GameData, setup: Setup): ApplyResult {
   log(c, 'turn', `Новая партия «${s.title}». Игроков: ${players.length}. Каждому — ${fmt(settings.startMoney)} и по ${settings.startStocks} акции каждого цвета номиналом ${fmt(settings.startQuote)}.`);
   for (const [r, v] of Object.entries(roles)) log(c, 'info', `${ROLE_RU[r as RoleId]}: ${v === 'host' ? 'ведущий' : pname(s, v)}`);
   for (const p of players) for (const col of COLORS) s.market.push({ i: s.market.length, turn: 0, player: p.id, color: col, from: settings.startQuote, to: settings.startQuote, reason: 'стартовая' });
-  // очерёдность: бросок первого кубика, при равенстве — переброс среди равных
-  let contenders = players.map((p) => p.id);
-  let round = 1;
-  if (setup.keepOrder) { contenders = [players[0].id]; log(c, 'info', 'Очерёдность задана ведущим.'); }
-  while (contenders.length > 1 && round < 20) {
-    const rolls = contenders.map((id) => ({ id, v: die(s) }));
-    log(c, 'info', `Розыгрыш первого хода${round > 1 ? ` (переброс ${round})` : ''}: ` + rolls.map((r) => `${pname(s, r.id)} — ${r.v}`).join(', '));
-    const best = Math.max(...rolls.map((r) => r.v));
-    contenders = rolls.filter((r) => r.v === best).map((r) => r.id);
-    round++;
+  // очерёдность: каждый бросает два кубика, порядок — по убыванию суммы; равные перебрасывают между собой
+  if (setup.keepOrder || setup.rollOrder === false) {
+    log(c, 'info', 'Очерёдность — в порядке списка игроков.');
+  } else {
+    const rollsOf = new Map<PlayerId, number[][]>(players.map((p) => [p.id, []]));
+    const rank = (ids: PlayerId[], depth: number): PlayerId[] => {
+      if (ids.length <= 1 || depth > 12) return ids;
+      const res = ids.map((id) => { const d = [die(s), die(s)]; rollsOf.get(id)!.push(d); return { id, sum: d[0] + d[1] }; });
+      const sums = [...new Set(res.map((r) => r.sum))].sort((x, y) => y - x);
+      return sums.flatMap((v) => rank(res.filter((r) => r.sum === v).map((r) => r.id), depth + 1));
+    };
+    s.order = rank(players.map((p) => p.id), 0);
+    s.orderRoll = players.map((p) => ({ player: p.id, rolls: rollsOf.get(p.id)! }));
+    log(c, 'info', 'Розыгрыш очерёдности (два кубика): ' + players.map((p) => `${p.name} — ${rollsOf.get(p.id)!.map((d) => `${d[0]}+${d[1]}`).join(', затем ')}`).join('; ') + '.');
+    log(c, 'turn', 'Очерёдность ходов: ' + s.order.map((id, k) => `${k + 1}. ${pname(s, id)}`).join(', ') + '.');
   }
-  const first = contenders[0];
-  const i = s.order.indexOf(first);
-  s.order = [...s.order.slice(i), ...s.order.slice(0, i)];
+  const first = s.order[0];
   s.turn.player = first;
   log(c, 'turn', `Первым ходит ${pname(s, first)}. Все фишки на клетке «Старт».`);
   log(c, 'turn', `Ход 1 — ${pname(s, first)}`);

@@ -16,6 +16,7 @@ export function SetupScreen() {
   const [quote, setQuote] = useState(10000);
   const [stocks, setStocks] = useState(1);
   const [claim, setClaim] = useState(true);
+  const [rollOrder, setRollOrder] = useState(true);
   const [title, setTitle] = useState(`Партия ${new Date().toLocaleDateString('ru-RU')}`);
   const [mode, setMode] = useState<'local' | 'host'>('local');
   const [via, setVia] = useState<'p2p' | 'ws'>('p2p');
@@ -33,10 +34,10 @@ export function SetupScreen() {
       try { localStorage.setItem('bk.name', hostName); } catch { /* */ }
       // в сетевой игре роли ведёт хост: состав игроков станет известен только в лобби
       const hostRoles = { banker: 'host', broker: 'host', chairman: 'host', inspector: 'host' } as const;
-      await openLobby(lan ? via : 'p2p', { title, roles: hostRoles, settings }, null, hostName);
+      await openLobby(lan ? via : 'p2p', { title, roles: hostRoles, settings, rollOrder }, null, hostName);
       return;
     }
-    newGame({ title, players, roles, settings });
+    newGame({ title, players, roles, settings, rollOrder });
   };
   return (
     <div className="glass card setup-card enter">
@@ -86,6 +87,7 @@ export function SetupScreen() {
             )}
           </>
         )}
+        <label className="check order-check" title="Каждый бросает по два кубика: кто выбросил больше — ходит раньше"><input type="checkbox" checked={rollOrder} onChange={(e) => setRollOrder(e.target.checked)} /> 🎲 Разыграть очередь хода</label>
         <details className="advanced-mini">
           <summary>Дополнительно: роли ведущих и стартовые ресурсы</summary>
           {(Object.keys(ROLE_RU) as RoleId[]).map((r) => (
