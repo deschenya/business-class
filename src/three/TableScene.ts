@@ -95,6 +95,8 @@ export class TableScene {
   tweens: Tween[] = [];
   activeRing: THREE.Mesh;
   hoverRing: THREE.Mesh;
+  previewRing: THREE.Mesh;
+  private previewSaved: { f: THREE.Vector3; pos: THREE.Vector3 } | null = null;
   private last = performance.now();
   private elapsed = 0;
   follow = true;
@@ -170,6 +172,8 @@ export class TableScene {
     this.activeRing = this.ring(0xffd36a, 0.62, 0.78);
     this.hoverRing = this.ring(0xffffff, 0.5, 0.58);
     this.hoverRing.visible = false;
+    this.previewRing = this.ring(0xffd36a, 0.5, 0.74);
+    this.previewRing.visible = false;
     this.makeDust();
     this.ready = this.build();
     this.resize();
@@ -779,6 +783,26 @@ export class TableScene {
     this.home.f.copy(target); this.home.r = this.sph.radius; this.home.phi = this.sph.phi; this.home.th = this.sph.theta;
     this.homeDirty = false;
   }
+  /** Предпросмотр клетки (наведение на вариант выбора): камера к клетке + подсветка; null — вернуться к фишке. */
+  preview(pos: Pos | null) {
+    if (pos) {
+      const w = this.worldOf(pos);
+      const small = pos.z === 'x' || pos.z === 'r';
+      if (!this.previewSaved) this.previewSaved = { f: this.controls.target.clone(), pos: this.camera.position.clone() };
+      this.previewRing.position.set(w.x, TOP + 0.014, w.z);
+      this.previewRing.scale.setScalar(small ? 0.42 : 1);
+      this.previewRing.visible = true;
+      const f = new THREE.Vector3(w.x, TOP, w.z);
+      this.direct({ kind: 'goal', auto: false, f, r: small ? CAM.moveRSmall : CAM.moveR, phi: small ? CAM.movePhiSmall : CAM.movePhi, th: this.thFor(f), sf: 0.12, sr: 0.16, sth: 0.18, until: this.elapsed + 3 });
+      return;
+    }
+    this.previewRing.visible = false;
+    const saved = this.previewSaved;
+    this.previewSaved = null;
+    if (!saved) return;
+    this.sph.setFromVector3(this.v1.copy(saved.pos).sub(saved.f));
+    this.direct({ kind: 'goal', auto: false, f: saved.f, r: this.sph.radius, phi: this.sph.phi, th: this.sph.theta, sf: 0.12, sr: 0.16, sth: 0.18, until: this.elapsed + 3 });
+  }
   resetView() { this.goTo(new THREE.Vector3(0, 0, 0.8), new THREE.Vector3(0, 24, 19)); }
   topView() { this.goTo(new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 30, 0.01)); }
 
@@ -859,6 +883,8 @@ export class TableScene {
       return b.info;
     }
     this.hoverRing.visible = false;
+    this.previewRing = this.ring(0xffd36a, 0.5, 0.74);
+    this.previewRing.visible = false;
     return null;
   }
   private pointerMove = (ev: PointerEvent) => {

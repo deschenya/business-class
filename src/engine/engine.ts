@@ -1,6 +1,6 @@
 import type {
   Action, ApplyResult, Card, CardEffect, Color, DeckId, ExCard, GameData, GameState, HighwayEffect, Loan, Lot, PlayerId,
-  Pos, Prompt, RoleId, Settings, Bundle,
+  Pos, Prompt, PromptOption, RoleId, Settings, Bundle,
 } from './types';
 import { COLORS, COLOR_RU, COLOR_RU_PL, LEVEL_RU, ROLE_RU } from './types';
 import { RULES } from './rulings';
@@ -142,7 +142,7 @@ function moveBy(c: Ctx, pid: PlayerId, steps: number) {
   if (paths.length <= 1) return executePath(c, pid, paths[0] ?? { steps: [] });
   ask(c, {
     to: pid, title: 'Выберите маршрут', text: `Выпало ${steps}. Доступно несколько путей:`,
-    options: paths.map((pa, i) => ({ id: String(i), label: pathLabel(c.s, pa), hint: pa.steps.some((x) => x.fee || x.feeKey) ? 'платный переход' : undefined })),
+    options: paths.map((pa, i) => ({ id: String(i), label: pathLabel(c.s, pa), target: pa.steps.at(-1)?.to, hint: pa.steps.some((x) => x.fee || x.feeKey) ? 'платный переход' : undefined })),
     ctx: { type: 'route', paths },
   });
 }
@@ -163,17 +163,17 @@ function land(c: Ctx, pid: PlayerId, pos: Pos) {
       return;
     case 'card': return drawPrompt(c, pid, cell.deck as DeckId);
     case 'exchange_gate':
-      ask(c, { to: pid, title: 'Биржа', text: `Сыграть на бирже или пройти «${cell.name}» как обычную клетку №${pos.id}?`, options: [{ id: 'play', label: 'Сыграть на бирже', tone: 'primary' }, { id: 'pass', label: 'Пройти как обычную клетку' }], ctx: { type: 'exGate' } });
+      ask(c, { to: pid, title: 'Биржа', text: `Сыграть на бирже или пройти «${cell.name}» как обычную клетку №${pos.id}?`, options: [{ id: 'play', label: 'Сыграть на бирже', tone: 'primary', target: { z: 'x', lane: null, n: 0 } as Pos }, { id: 'pass', label: 'Пройти как обычную клетку', target: pos }], ctx: { type: 'exGate' } });
       return;
     case 'broker':
-      ask(c, { to: pid, title: 'Маклер', text: `Можно пройти на биржу, оплатив в банк взнос ${fmt(cell.exchangeFee ?? 5000)}.`, options: [{ id: 'play', label: `На биржу (${fmt(cell.exchangeFee ?? 5000)})`, tone: 'primary', disabled: p.money < (cell.exchangeFee ?? 5000) }, { id: 'pass', label: 'Остаться' }], ctx: { type: 'brokerGate' } });
+      ask(c, { to: pid, title: 'Маклер', text: `Можно пройти на биржу, оплатив в банк взнос ${fmt(cell.exchangeFee ?? 5000)}.`, options: [{ id: 'play', label: `На биржу (${fmt(cell.exchangeFee ?? 5000)})`, tone: 'primary', disabled: p.money < (cell.exchangeFee ?? 5000), target: { z: 'x', lane: null, n: 0 } as Pos }, { id: 'pass', label: 'Остаться', target: pos }], ctx: { type: 'brokerGate' } });
       return;
     case 'bank': {
       transfer(c, 'bank', pid, cell.premium ?? 50000, 'премия клиенту банка');
       const twin = cell.twin!;
       ask(c, {
         to: pid, title: 'Клиент банка', text: `Выберите периметр для следующего хода. Переход ${pos.id}→${twin} — пошлина ${fmt(cell.transferFee ?? 25000)}.`,
-        options: [{ id: 'stay', label: pos.id === 24 ? 'Остаться за рубежом (клетка 24)' : 'Остаться в России (клетка 52)' }, { id: 'switch', label: twin === 52 ? `Перейти в Россию (52) −${fmt(cell.transferFee ?? 25000)}` : `Выехать за рубеж (24) −${fmt(cell.transferFee ?? 25000)}` }],
+        options: [{ id: 'stay', label: pos.id === 24 ? 'Остаться за рубежом (клетка 24)' : 'Остаться в России (клетка 52)', target: pos }, { id: 'switch', label: twin === 52 ? `Перейти в Россию (52) −${fmt(cell.transferFee ?? 25000)}` : `Выехать за рубеж (24) −${fmt(cell.transferFee ?? 25000)}`, target: C(twin) }],
         ctx: { type: 'bankSwitch', from: pos.id, to: twin, fee: cell.transferFee ?? 25000 },
       });
       return;
@@ -183,11 +183,11 @@ function land(c: Ctx, pid: PlayerId, pos: Pos) {
     case 'win50': {
       transfer(c, 'bank', pid, cell.amount ?? 20000, `клетка «${cell.name}» №50`);
       askStocks(c, pid, cell.stocks ?? 5, `Выигрыш: ${cell.stocks ?? 5} акций`);
-      ask(c, { to: pid, title: 'Рулетка', text: 'После остановки на клетке 50 можно сыграть на рулетке.', options: [{ id: 'play', label: 'Сыграть на рулетке', tone: 'primary' }, { id: 'pass', label: 'Не играть' }], ctx: { type: 'rlGate', returnTo: null } });
+      ask(c, { to: pid, title: 'Рулетка', text: 'После остановки на клетке 50 можно сыграть на рулетке.', options: [{ id: 'play', label: 'Сыграть на рулетке', tone: 'primary', target: { z: 'r', slot: c.s.data.board.roulette.startSlot } as Pos }, { id: 'pass', label: 'Не играть', target: pos }], ctx: { type: 'rlGate', returnTo: null } });
       return;
     }
     case 'roulette_gate':
-      ask(c, { to: pid, title: 'Рулетка', text: 'Сыграть на рулетке или пройти клетку №51 как обычную?', options: [{ id: 'play', label: 'Сыграть на рулетке', tone: 'primary' }, { id: 'pass', label: 'Пройти как обычную клетку' }], ctx: { type: 'rlGate', returnTo: null } });
+      ask(c, { to: pid, title: 'Рулетка', text: 'Сыграть на рулетке или пройти клетку №51 как обычную?', options: [{ id: 'play', label: 'Сыграть на рулетке', tone: 'primary', target: { z: 'r', slot: c.s.data.board.roulette.startSlot } as Pos }, { id: 'pass', label: 'Пройти как обычную клетку', target: pos }], ctx: { type: 'rlGate', returnTo: null } });
       return;
     default:
       return;
@@ -257,9 +257,9 @@ function landHotel(c: Ctx, pid: PlayerId) {
   ask(c, {
     to: pid, title: 'Отель', text: 'Дальнейшие действия:',
     options: [
-      { id: 'stay', label: 'Двигаться дальше обычным порядком' },
-      { id: 'highway', label: 'Проехать по автостраде (с клетки 1)' },
-      { id: 'roulette', label: 'Сыграть два раза на рулетке и вернуться в отель' },
+      { id: 'stay', label: 'Двигаться дальше обычным порядком', target: C(30) },
+      { id: 'highway', label: 'Проехать по автостраде (с клетки 1)', target: { z: 'h', n: 1 } },
+      { id: 'roulette', label: 'Сыграть два раза на рулетке и вернуться в отель', target: { z: 'r', slot: c.s.data.board.roulette.startSlot } as Pos },
       { id: 'buyRu', label: 'Открыть фирму в России за ½ цены', disabled: !free.length },
     ],
     ctx: { type: 'hotel' },
@@ -516,8 +516,8 @@ function summarize(ch: { player: PlayerId; color: Color; from: number; to: numbe
 function exchangeExit(c: Ctx, pid: PlayerId) {
   const s = c.s;
   const ex = s.exchange!;
-  const opts = s.data.board.exchange.exits.map((id) => ({ id: String(id), label: `Выйти на ${cellName(s, id)}` }));
-  if (ex.from66) opts.unshift({ id: 'origin', label: `Вернуться на исходную клетку (${posLabel(s, ex.origin)})` });
+  const opts: PromptOption[] = s.data.board.exchange.exits.map((id) => ({ id: String(id), label: `Выйти на ${cellName(s, id)}`, target: C(id) }));
+  if (ex.from66) opts.unshift({ id: 'origin', label: `Вернуться на исходную клетку (${posLabel(s, ex.origin)})`, target: ex.origin });
   ask(c, { to: pid, title: 'Выход с биржи', text: `Остановки: ${ex.stops.join(', ') || '—'}. Выберите клетку выхода.`, options: opts, ctx: { type: 'exExit' } });
 }
 
@@ -568,7 +568,7 @@ function rouletteRoll(c: Ctx, pid: PlayerId, sum: number) {
   }
   const canLeave = !!sec.exit || laps >= rl.lapsToLeave;
   if (canLeave) {
-    ask(c, { to: pid, title: 'Рулетка', text: sec.exit ? 'Зелёный сектор «ВЫХОД» — можно покинуть рулетку.' : `Пройдено ${laps} полных круга — можно покинуть рулетку.`, options: [{ id: 'more', label: 'Крутить ещё' }, ...rl.exitTo.map((id) => ({ id: String(id), label: `Выйти → ${cellName(s, id)}`, tone: 'primary' as const }))], ctx: { type: 'rlLeave' } });
+    ask(c, { to: pid, title: 'Рулетка', text: sec.exit ? 'Зелёный сектор «ВЫХОД» — можно покинуть рулетку.' : `Пройдено ${laps} полных круга — можно покинуть рулетку.`, options: [{ id: 'more', label: 'Крутить ещё' }, ...rl.exitTo.map((id) => ({ id: String(id), label: `Выйти → ${cellName(s, id)}`, tone: 'primary' as const, target: C(id) }))], ctx: { type: 'rlLeave' } });
   }
 }
 function rouletteLeave(c: Ctx, pid: PlayerId, to: number, why: string) {
@@ -778,7 +778,7 @@ function onAnswer(c: Ctx, q: Prompt, option: string, payload: any): string | voi
       if (option === 'roulette') return startRoulette(c, pid, 2, 30);
       if (option === 'buyRu') {
         const free = s.data.board.cells.filter((cl) => cl.type === 'ru_company' && !s.props[cl.id]);
-        ask(c, { to: pid, title: 'Фирма в России за ½ цены', text: 'Выберите свободную клетку внутреннего периметра. Дальше движение по внутреннему периметру.', options: [...free.map((cl) => ({ id: String(cl.id), label: `${cellName(s, cl.id)} — ${fmt(Math.round((cl.price ?? 0) / 2))}`, disabled: P(s, pid).money < Math.round((cl.price ?? 0) / 2) })), { id: 'none', label: 'Передумал', tone: 'muted' as const }], ctx: { type: 'hotelBuy' } });
+        ask(c, { to: pid, title: 'Фирма в России за ½ цены', text: 'Выберите свободную клетку внутреннего периметра. Дальше движение по внутреннему периметру.', options: [...free.map((cl) => ({ id: String(cl.id), target: C(cl.id), label: `${cellName(s, cl.id)} — ${fmt(Math.round((cl.price ?? 0) / 2))}`, disabled: P(s, pid).money < Math.round((cl.price ?? 0) / 2) })), { id: 'none', label: 'Передумал', tone: 'muted' as const }], ctx: { type: 'hotelBuy' } });
       }
       return;
     case 'hotelBuy': {
@@ -1052,7 +1052,7 @@ function dispatch(c: Ctx, a: Action): string | void {
       if (mode === 'exchange') return exchangeRoll(c, a.by, sum);
       if (mode === 'roulette') return rouletteRoll(c, a.by, sum);
       if (values.length === 2 && values[0] === 6 && values[1] === 6) {
-        ask(c, { to: a.by, title: '6 : 6!', text: 'Можно сыграть на бирже (после игры — вернуться на исходную клетку или выйти по правилам биржи) либо сходить на 12.', options: [{ id: 'exchange', label: 'Сыграть на бирже', tone: 'primary' }, { id: 'move', label: 'Ходить на 12' }], ctx: { type: 'six', steps: 12 } });
+        ask(c, { to: a.by, title: '6 : 6!', text: 'Можно сыграть на бирже (после игры — вернуться на исходную клетку или выйти по правилам биржи) либо сходить на 12.', options: [{ id: 'exchange', label: 'Сыграть на бирже', tone: 'primary', target: { z: 'x', lane: null, n: 0 } as Pos }, { id: 'move', label: 'Ходить на 12' }], ctx: { type: 'six', steps: 12 } });
         return;
       }
       return moveBy(c, a.by, sum);

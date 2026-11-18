@@ -7,6 +7,7 @@ import { STOCK_HEX, fmt, pn, cls } from './helpers';
 import { sfx } from './sound';
 import { TutorInline } from './Tutor';
 import { DeedCard } from './DeedCard';
+import { sceneRef } from './Game';
 
 // при покупке показываем карточку фирмы; подсвечивается то, что сейчас приобретается
 const DEED: Record<string, 'plot' | 'branch' | 'enterprise' | 'buy'> = { buyPlot: 'plot', buyBranch: 'branch', buyEnterprise: 'enterprise', buyRu: 'buy' };
@@ -23,6 +24,7 @@ export function PromptView({ s }: { s: GameState }) {
 }
 
 function PromptCard({ s, q, by }: { s: GameState; q: Prompt; by: string }) {
+  useEffect(() => () => sceneRef?.preview(null), []); // вопрос закрыт — вернуть камеру и убрать подсветку
   const dispatch = useStore((st) => st.dispatch);
   const [payload, setPayload] = useState<any>({});
   const [err, setErr] = useState<string | null>(null);
@@ -43,7 +45,9 @@ function PromptCard({ s, q, by }: { s: GameState; q: Prompt; by: string }) {
         {err && <p className="err">{err}</p>}
         <div className="prompt-options">
           {q.options.map((o) => (
-            <button key={o.id} className={cls('btn', o.tone === 'primary' && 'gold', o.tone === 'danger' && 'danger', o.tone === 'muted' && 'ghost')} disabled={o.disabled} onClick={() => answer(o.id)}>
+            <button key={o.id} className={cls('btn', o.tone === 'primary' && 'gold', o.tone === 'danger' && 'danger', o.tone === 'muted' && 'ghost', o.target && 'has-target')} disabled={o.disabled} onClick={() => answer(o.id)}
+              onMouseEnter={() => o.target && sceneRef?.preview(o.target)} onMouseLeave={() => o.target && sceneRef?.preview(null)}
+              onFocus={() => o.target && sceneRef?.preview(o.target)} onBlur={() => o.target && sceneRef?.preview(null)}>
               {o.label}{o.hint && <small>{o.hint}</small>}
             </button>
           ))}

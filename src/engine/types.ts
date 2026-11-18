@@ -119,7 +119,7 @@ export interface Auction { id: string; lot: Lot; seller: Party; initiator: Playe
 export interface Bundle { money: number; stocks: Partial<Record<Color, number>>; cells: number[] }
 export interface Trade { id: string; from: PlayerId; to: PlayerId; give: Bundle; take: Bundle; status: 'proposed' | 'accepted' | 'done' | 'declined' | 'cancelled' }
 
-export interface PromptOption { id: string; label: string; hint?: string; disabled?: boolean; tone?: 'primary' | 'danger' | 'muted' }
+export interface PromptOption { id: string; label: string; hint?: string; disabled?: boolean; tone?: 'primary' | 'danger' | 'muted'; /** куда ведёт выбор — камера показывает клетку при наведении */ target?: Pos }
 export interface PromptForm {
   kind: 'stockCounts' | 'distribute' | 'assignColors' | 'amount' | 'pickPlayer' | 'pickCell' | 'pickColor' | 'pickCard';
   total?: number; step?: number; min?: number; max?: number; values?: number[];
