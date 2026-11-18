@@ -46,7 +46,7 @@ function PromptCard({ s, q, by }: { s: GameState; q: Prompt; by: string }) {
         <div className="prompt-options">
           {q.options.map((o) => (
             <button key={o.id} className={cls('btn', o.tone === 'primary' && 'gold', o.tone === 'danger' && 'danger', o.tone === 'muted' && 'ghost', o.target && 'has-target')} disabled={o.disabled} onClick={() => answer(o.id)}
-              onMouseEnter={() => o.target && sceneRef?.preview(o.target)} onMouseLeave={() => o.target && sceneRef?.preview(null)}
+              onMouseEnter={() => o.target && sceneRef?.preview(o.target)} onMouseMove={() => o.target && sceneRef?.preview(o.target)} onMouseLeave={() => o.target && sceneRef?.preview(null)}
               onFocus={() => o.target && sceneRef?.preview(o.target)} onBlur={() => o.target && sceneRef?.preview(null)}>
               {o.label}{o.hint && <small>{o.hint}</small>}
             </button>

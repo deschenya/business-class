@@ -53,6 +53,7 @@ export function Menu() {
         </section>
       )}
       <div className="menu-links enter" style={stagger(k++)}>
+        <span className="build-tag" title="Версия сборки">сборка {__BUILD__}</span>
         <button className="menu-link" onClick={() => setScreen('rules')}><span>📖</span>Правила и словарь</button>
         <button className="menu-link" onClick={() => setScreen('editor')}><span>🗂️</span>Справочники</button>
       </div>

@@ -17,7 +17,8 @@ self.addEventListener('fetch', (e) => {
   if (url.origin !== location.origin || url.pathname.includes('/api/') || url.pathname.endsWith('/ws')) return;
   const fresh = req.mode === 'navigate' || url.pathname.endsWith('/precache.json') || url.pathname.endsWith('/');
   if (fresh) {
-    e.respondWith(fetch(req).catch(async () => (await caches.match(req, { ignoreSearch: true })) || (await caches.match('./')) || Response.error()));
+    // мимо HTTP-кеша (на GitHub Pages он держит страницу до 10 минут) — новая версия подхватывается сразу
+    e.respondWith(fetch(req, { cache: 'no-cache' }).catch(async () => (await caches.match(req, { ignoreSearch: true })) || (await caches.match('./')) || Response.error()));
     return;
   }
   e.respondWith(caches.match(req, { ignoreSearch: true }).then((hit) => hit || fetch(req)));

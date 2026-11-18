@@ -784,8 +784,12 @@ export class TableScene {
     this.homeDirty = false;
   }
   /** Предпросмотр клетки (наведение на вариант выбора): камера к клетке + подсветка; null — вернуться к фишке. */
+  private previewKey = '';
   preview(pos: Pos | null) {
     if (pos) {
+      const key = JSON.stringify(pos);
+      if (key === this.previewKey && this.previewRing.visible) return; // уже показываем эту клетку
+      this.previewKey = key;
       const w = this.worldOf(pos);
       const small = pos.z === 'x' || pos.z === 'r';
       if (!this.previewSaved) this.previewSaved = { f: this.controls.target.clone(), pos: this.camera.position.clone() };
@@ -797,6 +801,7 @@ export class TableScene {
       return;
     }
     this.previewRing.visible = false;
+    this.previewKey = '';
     const saved = this.previewSaved;
     this.previewSaved = null;
     if (!saved) return;

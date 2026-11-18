@@ -34,6 +34,7 @@ function precacheManifest(): Plugin {
 
 export default defineConfig({
   base: './',
+  define: { __BUILD__: JSON.stringify(new Date().toISOString().slice(0, 16).replace('T', ' ')) },
   plugins: [react(), precacheManifest()],
   server: {
     port: 5173,
