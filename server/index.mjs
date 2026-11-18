@@ -52,7 +52,12 @@ wss.on('connection', (ws, req) => {
       if (m.t === '_to') r.clients.get(m.cid)?.send(JSON.stringify(m.msg));
       else if (m.t === '_all') { const s = JSON.stringify(m.msg); for (const c of r.clients.values()) c.send(s); }
     });
-    ws.on('close', () => { console.log(`[${room}] хост отключился`); if (r.host === ws) r.host = null; if (!r.clients.size) rooms.delete(room); });
+    ws.on('close', () => {
+      console.log(`[${room}] хост отключился — закрываем комнату`);
+      if (r.host !== ws) return;
+      for (const c of r.clients.values()) { try { c.send(JSON.stringify({ t: 'bye' })); } catch {} c.close(); }
+      rooms.delete(room);
+    });
     return;
   }
   const r = rooms.get(room);

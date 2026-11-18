@@ -7,3 +7,6 @@ import { useStore } from './store';
 (window as any).bk = useStore;
 
 createRoot(document.getElementById('root')!).render(<App />);
+
+// хост закрывает вкладку — клиенты сразу уходят в меню
+window.addEventListener('pagehide', () => { if (useStore.getState().net.mode !== 'local') useStore.getState().leave(); });

@@ -4,9 +4,18 @@
 import type { Action, GameEvent, GameState, PlayerId } from '../engine/types';
 
 export type Seats = Record<PlayerId, string | null>; // контролёр места: 'host' | id клиента | null
+
+/** Место в лобби. owner: 'host' | id клиента | null (свободно). */
+export interface LobbySeat { id: string; name: string; color: string; lady: boolean; owner: string | null }
+export interface Lobby { title: string; seats: LobbySeat[]; resume: boolean }
 export type NetMsg =
   | { t: 'hello'; name: string }
-  | { t: 'welcome'; you: string; state: GameState | null; seats: Seats; title: string }
+  | { t: 'welcome'; you: string; state: GameState | null; seats: Seats; title: string; lobby: Lobby | null }
+  | { t: 'lobby'; lobby: Lobby | null }
+  | { t: 'seatEdit'; seat: string; name?: string; color?: string; lady?: boolean }
+  | { t: 'sit' }
+  | { t: 'ping' }
+  | { t: 'bye' }
   | { t: 'state'; state: GameState; events: GameEvent[]; seats: Seats }
   | { t: 'action'; action: Action }
   | { t: 'claim'; seat: PlayerId }

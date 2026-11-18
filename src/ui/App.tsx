@@ -6,6 +6,7 @@ import { GameScreen } from './Game';
 import { RulesScreen } from './Rules';
 import { EditorScreen } from './Editor';
 import { JoinScreen } from './Join';
+import { LobbyScreen } from './Lobby';
 import { Toasts } from './Toasts';
 
 export function App() {
@@ -24,6 +25,7 @@ export function App() {
       {screen === 'rules' && <RulesScreen />}
       {screen === 'editor' && <EditorScreen />}
       {screen === 'join' && <JoinScreen />}
+      {screen === 'lobby' && <LobbyScreen />}
       <Toasts />
     </>
   );

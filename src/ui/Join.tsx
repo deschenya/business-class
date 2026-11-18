@@ -27,7 +27,6 @@ export function JoinScreen() {
           {via === 'ws' && <label className="field"><span>Адрес хоста</span><input value={server} onChange={(e) => setServer(e.target.value)} placeholder={`${location.host} (текущий)`} /></label>}
           {net.status === 'connecting' && <p className="muted">Подключение…</p>}
           {net.status === 'error' && <p className="err">{net.error}</p>}
-          {net.status === 'online' && !useStore.getState().view && <p className="muted">Подключено. Ждём, когда хост начнёт партию…</p>}
           <div className="row">
             <button className="btn ghost" onClick={() => setScreen('menu')}>Назад</button>
             <button className="btn gold" onClick={go} disabled={code.length < 4}>Подключиться</button>

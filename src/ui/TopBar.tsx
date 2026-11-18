@@ -7,10 +7,10 @@ import { NetPanel } from './NetPanel';
 export function TopBar() {
   const { view, setScreen, net, leave, setDemo } = useStore();
   const [sound, setSound] = useState(sfx.on);
-  const [netOpen, setNetOpen] = useState(net.mode === 'host');
+  const [netOpen, setNetOpen] = useState(false);
   const [follow, setFollow] = useState(true);
   if (!view) return null;
-  const exit = () => { setDemo(null); if (net.mode !== 'local' && !confirm('Выйти из сетевой игры?')) return; if (net.mode !== 'local') leave(); setScreen('menu'); };
+  const exit = () => { setDemo(null); if (net.mode !== 'local' && !confirm(net.mode === 'host' ? 'Выйти в меню? Комната закроется, все игроки будут отключены. Партия сохранится у вас.' : 'Выйти из сетевой игры?')) return; if (net.mode !== 'local') leave(); setScreen('menu'); };
   return (
     <div className="topbar">
       <button className="btn ghost sm" onClick={exit}>☰ Меню</button>

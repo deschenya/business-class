@@ -8,7 +8,8 @@ import { PromptView } from './PromptView';
 import { CardReveal } from './CardReveal';
 import { Tooltip } from './Tooltip';
 import { TopBar } from './TopBar';
-import type { GameEvent } from '../engine/types';
+import type { GameEvent, GameState } from '../engine/types';
+import { PawnIcon } from './helpers';
 
 export let sceneRef: TableScene | null = null;
 let revealResolve: (() => void) | null = null;
@@ -72,7 +73,25 @@ export function GameScreen() {
       {!busy && <PromptView s={view} />}
       <CardReveal s={view} />
       {(pinned || hover) && <Tooltip s={view} h={(pinned || hover)!} pinned={!!pinned} onClose={() => setPinned(null)} />}
+      <SeatPicker s={view} />
       {demo && <div className="demo-caption glass"><b>Демо {demo.step}/{demo.total}</b> {demo.caption}</div>}
+    </div>
+  );
+}
+
+/** Клиент без фишки (вошёл в идущую партию или переподключился) выбирает свободное место. */
+function SeatPicker({ s }: { s: GameState }) {
+  const net = useStore((st) => st.net);
+  const claim = useStore((st) => st.claim);
+  if (net.mode !== 'client' || Object.values(net.seats).includes(net.me ?? '#')) return null;
+  const free = s.players.filter((p) => !p.bankrupt && !net.seats[p.id]);
+  return (
+    <div className="seat-pick glass">
+      <b>Выберите свою фишку</b>
+      {free.length === 0 && <span className="muted small">Свободных фишек нет — вы смотрите партию. Хост может освободить место в меню «Сеть».</span>}
+      <div className="row wrap">
+        {free.map((p) => <button key={p.id} className="btn" onClick={() => claim(p.id)}><PawnIcon color={p.color} size={20} />{p.name}</button>)}
+      </div>
     </div>
   );
 }

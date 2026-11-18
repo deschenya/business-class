@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { hasLanServer, useStore } from '../store';
+import { hasLanServer, myName, useStore } from '../store';
 import { RULINGS, DEFAULT_RULINGS } from '../engine/rulings';
 import { ROLE_RU, type RoleId } from '../engine/types';
 import { PAWN_PALETTE, PawnIcon, colorName, fmt } from './helpers';
@@ -8,7 +8,8 @@ import type { SetupPlayer } from '../engine/engine';
 const NAMES = ['Анна', 'Борис', 'Вера', 'Глеб', 'Дарья', 'Егор', 'Жанна', 'Захар'];
 
 export function SetupScreen() {
-  const { newGame, setScreen, hostOnline, net } = useStore();
+  const { newGame, setScreen, openLobby } = useStore();
+  const [hostName, setHostName] = useState(myName());
   const [players, setPlayers] = useState<SetupPlayer[]>(() => [0, 1, 2].map((i) => ({ name: NAMES[i], color: PAWN_PALETTE[i].hex, avatar: '', lady: i % 2 === 0 })));
   const [roles, setRoles] = useState<Record<RoleId, number | 'host'>>({ banker: 'host', broker: 'host', chairman: 'host', inspector: 'host' });
   const [money, setMoney] = useState(350000);
@@ -28,8 +29,15 @@ export function SetupScreen() {
     setPlayers([...players, { name: NAMES[i] ?? `Игрок ${i + 1}`, color, avatar: '', lady: false }]);
   };
   const start = async () => {
-    if (mode === 'host' && net.mode !== 'host') await hostOnline(lan ? via : 'p2p');
-    newGame({ title, players, roles, settings: { startMoney: money, startQuote: quote, startStocks: stocks, rentNeedsClaim: claim }, rulings });
+    const settings = { startMoney: money, startQuote: quote, startStocks: stocks, rentNeedsClaim: claim };
+    if (mode === 'host') {
+      try { localStorage.setItem('bk.name', hostName); } catch { /* */ }
+      // в сетевой игре роли ведёт хост: состав игроков станет известен только в лобби
+      const hostRoles = { banker: 'host', broker: 'host', chairman: 'host', inspector: 'host' } as const;
+      await openLobby(lan ? via : 'p2p', { title, roles: hostRoles, settings, rulings }, null, hostName);
+      return;
+    }
+    newGame({ title, players, roles, settings, rulings });
   };
   return (
     <div className="screen setup">
@@ -57,6 +65,7 @@ export function SetupScreen() {
             )}
           </button>
         </section>
+{mode === 'local' ? (
         <section className="glass card">
           <h2>Игроки <span className="muted">({players.length})</span></h2>
           <p className="muted small">По правилам — 2–4 игрока; при большем числе добавьте фишки вручную.</p>
@@ -81,15 +90,22 @@ export function SetupScreen() {
           ))}
           {players.length < 8 && <button className="btn" onClick={add}>+ Добавить фишку</button>}
         </section>
+        ) : (
+        <section className="glass card">
+          <h2>Игроки</h2>
+          <p className="muted small">Игроки соберутся в лобби: каждый, кто откроет вашу ссылку, получит свою фишку и сам выберет имя и цвет. Можно добавить и игроков за этим устройством.</p>
+          <label className="field"><span>Ваше имя</span><input value={hostName} onChange={(e) => setHostName(e.target.value)} placeholder="Хост" /></label>
+        </section>
+        )}
         <section className="glass card">
           <h2>Роли ведущих</h2>
           <p className="muted small">Один человек может совмещать роли. «Ведущий» — тот, кто управляет хостом.</p>
           {(Object.keys(ROLE_RU) as RoleId[]).map((r) => (
             <label key={r} className="field">
               <span>{ROLE_RU[r]}</span>
-              <select value={String(roles[r])} onChange={(e) => setRoles({ ...roles, [r]: e.target.value === 'host' ? 'host' : Number(e.target.value) })}>
+              <select value={mode === 'host' ? 'host' : String(roles[r])} onChange={(e) => setRoles({ ...roles, [r]: e.target.value === 'host' ? 'host' : Number(e.target.value) })}>
                 <option value="host">Ведущий (хост)</option>
-                {players.map((p, i) => <option key={i} value={i}>{p.name}</option>)}
+                {mode === 'local' && players.map((p, i) => <option key={i} value={i}>{p.name}</option>)}
               </select>
             </label>
           ))}
@@ -116,7 +132,7 @@ export function SetupScreen() {
         </section>
       </div>
       <footer className="setup-foot">
-        <button className="btn gold big" onClick={start} disabled={players.length < 2}>{mode === 'host' ? 'Создать комнату и начать →' : 'Начать партию →'}</button>
+        <button className="btn gold big" onClick={start} disabled={mode === 'local' && players.length < 2}>{mode === 'host' ? 'Создать комнату →' : 'Начать партию →'}</button>
       </footer>
     </div>
   );
