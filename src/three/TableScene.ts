@@ -12,6 +12,7 @@ import { simulateDice, type DiceRun } from './dice';
 import { sfx } from '../ui/sound';
 import { pawnSvg } from '../ui/helpers';
 
+const LABEL_H = 1.1; // высота подписи над основанием фишки
 const BOARD = 20; // размер поля в мировых единицах
 const TOP = 0.16; // высота верхней грани поля
 const PX = BOARD / 2048;
@@ -343,8 +344,8 @@ export class TableScene {
         el.innerHTML = `${pawnSvg(p.color, 18)}<span>${p.name}</span>`;
         el.style.setProperty('--c', p.color);
         const label = new CSS2DObject(el);
-        label.position.set(0, 1.25, 0);
-        obj.add(label);
+        // подпись не дочерняя к фишке: иначе наклоны/сальто прыжка уносят её в сторону; позицию синхронизируем в цикле
+        this.scene.add(label);
         this.scene.add(obj);
         pw = { obj, mat, label, busy: false };
         this.pawns.set(p.id, pw);
@@ -910,6 +911,11 @@ export class TableScene {
       this.shakeAmp *= Math.exp(-dt * 9);
     }
     if (this.quality === 'high') this.composer.render(); else this.renderer.render(this.scene, this.camera);
+    // подписи висят строго над фишками (только позиция, без вращения фишки)
+    for (const pw of this.pawns.values()) {
+      pw.label.visible = pw.obj.visible;
+      pw.label.position.set(pw.obj.position.x, pw.obj.position.y + LABEL_H * pw.obj.scale.y, pw.obj.position.z);
+    }
     this.labels.render(this.scene, this.camera);
     if (shaking) this.camera.position.copy(this.shakeSaved);
   };
