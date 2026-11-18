@@ -68,13 +68,13 @@ export function ActionBar({ s, busy }: { s: GameState; busy: boolean }) {
         <div className="ab-actions">
           {roll && mine && !busy && (
             <button className="btn roll" onClick={() => dispatch({ type: 'roll', by: cur.id })}>
-              🎲 {roll === 'exchange' ? 'Ход по бирже' : roll === 'roulette' ? 'Крутить рулетку' : s.turn.oneDie || cur.oneDieNext ? 'Бросить один кубик' : 'Бросить кубики'}
+              🎲 {roll === 'order' ? 'Бросить на очерёдность' : roll === 'extra' ? (s.turn.extraOneDie ? 'Дополнительный ход (один кубик)' : 'Дополнительный ход') : roll === 'exchange' ? 'Ход по бирже' : roll === 'roulette' ? 'Крутить рулетку' : s.turn.oneDie || cur.oneDieNext ? 'Бросить один кубик' : 'Бросить кубики'}
             </button>
           )}
-          {s.turn.stage === 'post' && mine && !busy && !s.prompts.length && (
+          {s.turn.stage === 'post' && !s.turn.extra && mine && !busy && !s.prompts.length && (
             <button className="btn gold" disabled={debts.some((d) => d.debtor === cur.id)} onClick={() => dispatch({ type: 'endTurn', by: cur.id })}>Завершить ход →</button>
           )}
-          {!mine && !over && <span className="ab-hint"><span className="spinner sm" />Ходит {cur.name} — ждём</span>}
+          {!mine && !over && <span className="ab-hint"><span className="spinner sm" />{s.turn.stage === 'order' ? `${cur.name} бросает на очерёдность` : `Ходит ${cur.name} — ждём`}</span>}
           {mine && !busy && !over && s.prompts.length > 0 && !roll && <span className="ab-hint">Сделайте выбор в окне ↑</span>}
         </div>
         {actor && !busy && (

@@ -11,7 +11,7 @@ import { TopBar } from './TopBar';
 import type { GameEvent, GameState } from '../engine/types';
 import { PawnIcon } from './helpers';
 import { TutorCard } from './Tutor';
-import { OrderRoll } from './OrderRoll';
+import { OrderPanel } from './OrderRoll';
 import { sfx } from './sound';
 
 export let sceneRef: TableScene | null = null;
@@ -77,7 +77,7 @@ export function GameScreen() {
       <CardReveal s={view} />
       {(pinned || hover) && <Tooltip s={view} h={(pinned || hover)!} pinned={!!pinned} onClose={() => setPinned(null)} />}
       <SeatPicker s={view} />
-      <OrderRoll key={view.id} s={view} />
+      <OrderPanel s={view} />
       <TutorCard s={view} busy={busy} />
       <TurnBanner s={view} busy={busy} />
       {demo && <div className="demo-caption glass"><b>Демо {demo.step}/{demo.total}</b> {demo.caption}</div>}
@@ -113,11 +113,12 @@ function TurnBanner({ s, busy }: { s: GameState; busy: boolean }) {
     if (busy || s.turn.stage === 'over' || last.current === key) return;
     const first = last.current === '';
     last.current = key;
-    if (first && s.turn.n > 1) return; // не мешаем при загрузке партии
+    if (first && (s.turn.n > 1 || s.turn.rolled)) return; // не мешаем при загрузке партии
     const p = s.players.find((x) => x.id === s.turn.player)!;
     const mine = can(p.id);
-    const text = mode === 'local' ? `Ход: ${p.name}` : mine ? 'Ваш ход!' : `Ходит ${p.name}`;
-    const sub = mode === 'local' ? 'передайте устройство игроку' : mine ? 'бросайте кубики, когда будете готовы' : 'ждём его решения';
+    const order = s.turn.stage === 'order';
+    const text = order ? (mode !== 'local' && mine ? 'Ваш бросок на очерёдность!' : `На очерёдность бросает ${p.name}`) : mode === 'local' ? `Ход: ${p.name}` : mine ? 'Ваш ход!' : `Ходит ${p.name}`;
+    const sub = order ? 'кто выбросит больше — ходит раньше' : mode === 'local' ? 'передайте устройство игроку' : mine ? 'бросайте кубики, когда будете готовы' : 'ждём его решения';
     setShown({ key, text, sub, color: p.color });
     if (mine) sfx.good();
     const t = setTimeout(() => setShown((x) => (x?.key === key ? null : x)), 1900);

@@ -165,7 +165,7 @@ export interface GameState {
   roles: Record<RoleId, PlayerId | 'host'>;
   players: Player[];
   order: PlayerId[];
-  turn: { n: number; player: PlayerId; stage: 'pre' | 'post' | 'over'; dice: number[] | null; extra: boolean; extraOneDie: boolean; oneDie: boolean; rolled: boolean };
+  turn: { n: number; player: PlayerId; stage: 'order' | 'pre' | 'post' | 'over'; dice: number[] | null; extra: boolean; extraOneDie: boolean; oneDie: boolean; rolled: boolean };
   rollIndex: number;
   props: Record<number, Property>;
   loans: Loan[];
@@ -185,6 +185,8 @@ export interface GameState {
   winner: PlayerId | null;
   /** результаты розыгрыша очерёдности: броски каждого игрока (с перебросами при равенстве) */
   orderRoll?: { player: PlayerId; rolls: number[][] }[];
+  /** идёт розыгрыш очерёдности: группы игроков по местам; группа из нескольких — бросают (снова) */
+  orderPhase?: { buckets: PlayerId[][]; rolling: PlayerId[]; round: number; sums: Record<PlayerId, number> } | null;
 }
 
 // ---------------------------------------------------------------- события для анимации

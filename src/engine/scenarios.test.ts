@@ -274,22 +274,38 @@ describe('Бизнес-класс: сценарии', () => {
     expect(P(t, 'p1').money).toBe(370000);
   });
 
-  it('розыгрыш очерёдности: два кубика, по убыванию суммы, равные перебрасывают', () => {
-    for (let seed = 1; seed <= 40; seed++) {
-      const players = ['А', 'Б', 'В', 'Г'].map((name) => ({ name, color: '#fff', avatar: '', lady: false }));
-      const s = createGame(data, { players, roles: { banker: 'host', broker: 'host', chairman: 'host', inspector: 'host' }, seed }).state;
-      expect(s.orderRoll?.length).toBe(4);
-      expect(new Set(s.order).size).toBe(4);
-      expect(s.turn.player).toBe(s.order[0]);
-      const first = (id: string) => s.orderRoll!.find((r) => r.player === id)!.rolls[0];
-      const sum = (d: number[]) => d[0] + d[1];
-      // по первым броскам порядок не возрастает; при равенстве решает переброс
-      for (let k = 1; k < 4; k++) expect(sum(first(s.order[k - 1]))).toBeGreaterThanOrEqual(sum(first(s.order[k])));
-      for (const r of s.orderRoll!) for (const d of r.rolls) { expect(d.length).toBe(2); d.forEach((v) => expect(v >= 1 && v <= 6).toBe(true)); }
+  it('розыгрыш очерёдности: игроки бросают сами, по убыванию суммы, равные перебрасывают', () => {
+    const players = ['А', 'Б', 'В'].map((name) => ({ name, color: '#fff', avatar: '', lady: false }));
+    let s = createGame(data, { players, roles: { banker: 'host', broker: 'host', chairman: 'host', inspector: 'host' }, settings: { allowForcedDice: true }, seed: 7 }).state;
+    expect(s.turn.stage).toBe('order');
+    expect(awaitingRoll(s)).toBe('order');
+    expect(() => act(s, { type: 'endTurn', by: s.turn.player })).toThrow();
+    // А: 3+3=6, Б: 5+4=9, В: 2+4=6 → Б первый, А и В перебрасывают: А 1+1, В 6+5 → Б, В, А
+    for (const [who, d] of [['p1', [3, 3]], ['p2', [5, 4]], ['p3', [2, 4]], ['p1', [1, 1]], ['p3', [6, 5]]] as const) {
+      expect(s.turn.player).toBe(who);
+      s = act(s, { type: 'roll', by: who, force: [...d] });
     }
-    const off = createGame(data, { players: [{ name: 'А', color: '#fff', avatar: '', lady: false }, { name: 'Б', color: '#fff', avatar: '', lady: false }], roles: { banker: 'host', broker: 'host', chairman: 'host', inspector: 'host' }, rollOrder: false }).state;
-    expect(off.order).toEqual(['p1', 'p2']);
-    expect(off.orderRoll).toBeUndefined();
+    expect(s.orderPhase).toBeNull();
+    expect(s.order).toEqual(['p2', 'p3', 'p1']);
+    expect(s.turn).toMatchObject({ n: 1, player: 'p2', stage: 'pre' });
+    const off = createGame(data, { players, roles: { banker: 'host', broker: 'host', chairman: 'host', inspector: 'host' }, rollOrder: false }).state;
+    expect(off.order).toEqual(['p1', 'p2', 'p3']);
+    expect(off.turn.stage).toBe('pre');
+  });
+
+  it('дополнительный ход по карточке можно сразу выполнить', () => {
+    let s = newGame();
+    s.data.cards.decks.surprise.cards = [s.data.cards.decks.surprise.cards.find((c) => c.id === 'surprise-5')!];
+    s = roll(s, [3, 4]); // 7 Сюрприз
+    s = answer(s, 'pick', { index: 0 });
+    expect(s.turn.extra).toBe(true);
+    expect(awaitingRoll(s)).toBe('extra');
+    const n = s.turn.n;
+    s = act(s, { type: 'roll', by: 'p1', force: [2] });
+    expect(s.turn.n).toBe(n + 1);
+    expect(s.turn.player).toBe('p1');
+    expect(s.turn.dice).toEqual([2]); // одним кубиком
+    expect(P(s, 'p1').pos).toEqual({ z: 'c', id: 9 });
   });
 
   it('демо-журнал расчётов ведётся', () => {

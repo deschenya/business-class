@@ -47,21 +47,16 @@ export function createGame(data: GameData, setup: Setup): ApplyResult {
   log(c, 'turn', `Новая партия «${s.title}». Игроков: ${players.length}. Каждому — ${fmt(settings.startMoney)} и по ${settings.startStocks} акции каждого цвета номиналом ${fmt(settings.startQuote)}.`);
   for (const [r, v] of Object.entries(roles)) log(c, 'info', `${ROLE_RU[r as RoleId]}: ${v === 'host' ? 'ведущий' : pname(s, v)}`);
   for (const p of players) for (const col of COLORS) s.market.push({ i: s.market.length, turn: 0, player: p.id, color: col, from: settings.startQuote, to: settings.startQuote, reason: 'стартовая' });
-  // очерёдность: каждый бросает два кубика, порядок — по убыванию суммы; равные перебрасывают между собой
+  // очерёдность: игроки сами по кругу бросают два кубика (фаза «order»); равные перебрасывают между собой
   if (setup.keepOrder || setup.rollOrder === false) {
     log(c, 'info', 'Очерёдность — в порядке списка игроков.');
   } else {
-    const rollsOf = new Map<PlayerId, number[][]>(players.map((p) => [p.id, []]));
-    const rank = (ids: PlayerId[], depth: number): PlayerId[] => {
-      if (ids.length <= 1 || depth > 12) return ids;
-      const res = ids.map((id) => { const d = [die(s), die(s)]; rollsOf.get(id)!.push(d); return { id, sum: d[0] + d[1] }; });
-      const sums = [...new Set(res.map((r) => r.sum))].sort((x, y) => y - x);
-      return sums.flatMap((v) => rank(res.filter((r) => r.sum === v).map((r) => r.id), depth + 1));
-    };
-    s.order = rank(players.map((p) => p.id), 0);
-    s.orderRoll = players.map((p) => ({ player: p.id, rolls: rollsOf.get(p.id)! }));
-    log(c, 'info', 'Розыгрыш очерёдности (два кубика): ' + players.map((p) => `${p.name} — ${rollsOf.get(p.id)!.map((d) => `${d[0]}+${d[1]}`).join(', затем ')}`).join('; ') + '.');
-    log(c, 'turn', 'Очерёдность ходов: ' + s.order.map((id, k) => `${k + 1}. ${pname(s, id)}`).join(', ') + '.');
+    s.orderRoll = players.map((p) => ({ player: p.id, rolls: [] }));
+    s.orderPhase = { buckets: [players.map((p) => p.id)], rolling: players.map((p) => p.id), round: 1, sums: {} };
+    s.turn.stage = 'order';
+    s.turn.player = players[0].id;
+    log(c, 'turn', `Розыгрыш очерёдности: каждый бросает два кубика, кто выбросит больше — ходит раньше. Первым бросает ${players[0].name}.`);
+    return { state: s, events: c.ev };
   }
   const first = s.order[0];
   s.turn.player = first;
@@ -684,13 +679,49 @@ function settle(c: Ctx) {
   if (s.turn.rolled) s.turn.stage = 'post';
 }
 
-export function awaitingRoll(s: GameState): 'main' | 'exchange' | 'roulette' | null {
+export function awaitingRoll(s: GameState): 'main' | 'exchange' | 'roulette' | 'order' | 'extra' | null {
   if (s.turn.stage === 'over' || s.prompts.length) return null;
+  if (s.turn.stage === 'order' && s.orderPhase) return 'order';
   if (s.debts.some((d) => d.debtor === s.turn.player)) return null;
   if (s.exchange && s.exchange.lane && s.exchange.mode && !s.exchange.done) return 'exchange';
   if (s.roulette) return 'roulette';
   if (!s.exchange && s.turn.stage === 'pre' && !s.turn.rolled) return 'main';
+  // карточка дала дополнительный ход: можно сразу бросать снова
+  if (s.turn.stage === 'post' && s.turn.extra && !s.exchange && !s.roulette) return 'extra';
   return null;
+}
+
+/** Бросок на очерёдность: записываем сумму, когда группа отбросала — делим её по суммам; равные бросают снова. */
+function orderRoll(c: Ctx, pid: PlayerId, values: number[]) {
+  const s = c.s;
+  const ph = s.orderPhase!;
+  const sum = values[0] + values[1];
+  ph.sums[pid] = sum;
+  s.orderRoll?.find((r) => r.player === pid)?.rolls.push(values);
+  ph.rolling = ph.rolling.filter((x) => x !== pid);
+  log(c, 'info', `${pname(s, pid)} — на очерёдность: ${values[0]} + ${values[1]} = ${sum}${ph.round > 1 ? ' (переброс)' : ''}`, pid);
+  if (ph.rolling.length) { s.turn.player = ph.rolling[0]; return; }
+  // группа отбросала: делим её по суммам
+  const bi = ph.buckets.findIndex((b) => b.length > 1);
+  const b = ph.buckets[bi];
+  const sums = [...new Set(b.map((id) => ph.sums[id]))].sort((x, y) => y - x);
+  ph.buckets.splice(bi, 1, ...sums.map((v) => b.filter((id) => ph.sums[id] === v)));
+  const next = ph.buckets.find((g) => g.length > 1);
+  if (next) {
+    ph.round++;
+    ph.rolling = [...next];
+    s.turn.player = next[0];
+    log(c, 'info', `Равенство: ${next.map((id) => pname(s, id)).join(', ')} перебрасывают.`);
+    c.ev.push({ t: 'toast', text: `Равенство — перебрасывают: ${next.map((id) => pname(s, id)).join(', ')}`, tone: 'info' });
+    return;
+  }
+  // очерёдность определена
+  s.order = ph.buckets.flat();
+  s.orderPhase = null;
+  s.turn = { n: 1, player: s.order[0], stage: 'pre', dice: null, extra: false, extraOneDie: false, oneDie: false, rolled: false };
+  log(c, 'turn', 'Очерёдность ходов: ' + s.order.map((id, k) => `${k + 1}. ${pname(s, id)}`).join(', ') + '.');
+  log(c, 'turn', `Ход 1 — ${pname(s, s.order[0])}`);
+  c.ev.push({ t: 'toast', text: `Первым ходит ${pname(s, s.order[0])}`, tone: 'good' });
 }
 
 // ====================================================================== разрешение подсказок
@@ -999,6 +1030,18 @@ function dispatch(c: Ctx, a: Action): string | void {
       if (a.by !== s.turn.player) return 'Сейчас ходит другой игрок';
       if (!mode) return s.prompts.length ? 'Сначала ответьте на вопрос' : s.debts.some((d) => d.debtor === a.by) ? 'Сначала погасите долг' : 'Бросок сейчас недоступен';
       const p = P(s, a.by);
+      if (mode === 'order') {
+        const forcedO = s.settings.allowForcedDice && a.force?.length === 2 ? a.force : null;
+        const v = forcedO ?? [die(s), die(s)];
+        c.ev.push({ t: 'dice', player: a.by, values: v });
+        return orderRoll(c, a.by, v);
+      }
+      if (mode === 'extra') {
+        // дополнительный ход по карточке начинается сразу, без «Завершить ход»
+        log(c, 'turn', `${p.name} использует дополнительный ход.`, a.by);
+        advanceTurn(c);
+        return dispatch(c, a);
+      }
       const one = mode === 'main' && (s.turn.oneDie || p.oneDieNext);
       const forced = s.settings.allowForcedDice && a.force?.length ? a.force : null;
       const values = forced ? forced.slice(0, one ? 1 : 2) : one ? [die(s)] : [die(s), die(s)];
