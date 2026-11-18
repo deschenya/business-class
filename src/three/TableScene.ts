@@ -588,7 +588,7 @@ export class TableScene {
             wobble: (Math.random() * 2 - 1) * HOP.wobble,
             yaw: (Math.random() * 2 - 1) * 0.5,
             onLand: () => {
-              sfx.tap();
+              if (last) sfx.land(); else sfx.tap();
               this.puff(to, (small ? 0.45 : 1) * (last ? 1.35 : 0.75), last ? 0.55 : 0.26);
               if (last) this.kick(small ? CAM.shake * 0.5 : CAM.shake);
             },
@@ -611,7 +611,7 @@ export class TableScene {
           dur: (HOP.teleDur + dist * 0.012) / speed, height: HOP.teleHeight + Math.min(dist, 20) * 0.07,
           antic: 0.2 / speed, settle: 0.34 / speed, squash: 0.32, lean: 0.14,
           flip: Math.PI * 2, pivot: HOP.pivot, yaw: Math.PI * (Math.random() < 0.5 ? -1 : 1),
-          onLand: () => { sfx.tap(); this.puff(to, small ? 0.7 : 1.8, 0.65); this.kick(CAM.shakeTele); },
+          onLand: () => { sfx.land(); this.puff(to, small ? 0.7 : 1.8, 0.65); this.kick(CAM.shakeTele); },
         });
         this.restPose(pw.obj);
         // после прыжка камера тоже остаётся на фишке
@@ -626,7 +626,7 @@ export class TableScene {
         const who = e.to !== 'bank' ? e.to : e.from;
         const pw = who !== 'bank' ? this.pawns.get(who) : null;
         if (pw) this.floatText(pw.obj.position, `${e.to === who ? '+' : '−'}$${e.amount.toLocaleString('ru-RU')}`, e.to === who ? '#ffd76a' : '#ff6d5a');
-        if (e.to !== 'bank') sfx.coin();
+        if (e.to !== 'bank') sfx.coin(); else sfx.pay();
       }
     }
     // бросок без перемещения (например, на рулетке/бирже) — вернуть фокус на фишку ходящего
