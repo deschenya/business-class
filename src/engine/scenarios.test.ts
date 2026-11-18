@@ -68,7 +68,6 @@ describe('Бизнес-класс: сценарии', () => {
     s = answer(s, 'buy');
     expect(s.props[3].level).toBe('enterprise');
     expect(P(s, 'p1').money).toBe(before - 50000); // по скану: оплачивает стоимость
-    expect(s.log.some((l) => l.kind === 'ruling' && l.text.includes('предприятия'))).toBe(true);
   });
 
   it('4. аренда и срок её требования', () => {
@@ -218,6 +217,40 @@ describe('Бизнес-класс: сценарии', () => {
     expect(s.prompts[0].ctx.type).toBe('rlLeave');
     s = answer(s, '52');
     expect(P(s, 'p1').pos).toEqual({ z: 'c', id: 52 });
+  });
+
+  it('уточнённые правила: фирма в России за полную цену', () => {
+    let s = newGame();
+    place(s, 'p1', 40);
+    s = roll(s, [1, 1]); // 40→41→42 АЗЛК (цена 100 000)
+    while (s.prompts[0]?.ctx.type === 'route') s = answer(s, s.prompts[0].options.find((o) => !o.label.includes('Старт'))!.id);
+    expect(s.prompts[0].ctx.type).toBe('buyRu');
+    expect(s.prompts[0].ctx.cost).toBe(100000);
+  });
+
+  it('уточнённые правила: «сосед справа» — следующий по очереди', () => {
+    let s = newGame(3);
+    s.data.cards.decks.fine.cards = [s.data.cards.decks.fine.cards.find((c) => c.id === 'fine-3')!];
+    place(s, 'p1', 20);
+    s = roll(s, [1, 2]); // 23 Штраф
+    s = answer(s, 'pick', { index: 0 });
+    expect(P(s, 'p2').money).toBe(355000);
+    expect(P(s, 'p1').money).toBe(345000);
+  });
+
+  it('уточнённые правила: бросок дальше 20 на бирже — без прибавки, ровно на «Старт» — $20 000', () => {
+    let s = newGame();
+    s.exchange = { player: 'p1', lane: 'red', n: 15, mode: 'simple', origin: { z: 'c', id: 10 }, from66: false, done: false, stops: [15] };
+    P(s, 'p1').pos = { z: 'x', lane: 'red', n: 15 };
+    s.turn.rolled = true;
+    const q0 = P(s, 'p1').quotes.red;
+    s = roll(s, [4, 5]);
+    expect(P(s, 'p1').quotes.red).toBe(q0);
+    expect(s.prompts[0].ctx.type).toBe('exExit');
+    let t = newGame();
+    place(t, 'p1', 37);
+    t = roll(t, [1, 2]); // 37 → 0
+    expect(P(t, 'p1').money).toBe(370000);
   });
 
   it('демо-журнал расчётов ведётся', () => {

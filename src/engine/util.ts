@@ -1,6 +1,6 @@
 import type { Color, CompanyCell, GameEvent, GameState, Party, Player, PlayerId, Pos, Prompt, Property } from './types';
 import { COLORS } from './types';
-import { rulingLabel } from './rulings';
+import { RULES, type RuleKey } from './rulings';
 
 export interface Ctx { s: GameState; ev: GameEvent[] }
 
@@ -48,11 +48,9 @@ export function posLabel(s: GameState, pos: Pos): string {
 export function log(c: Ctx, kind: GameState['log'][number]['kind'], text: string, player?: PlayerId) {
   c.s.log.push({ i: c.s.log.length, turn: c.s.turn?.n ?? 0, kind, text, player });
 }
-export function ruling(c: Ctx, key: string): string {
-  return c.s.rulings[key];
-}
-export function logRuling(c: Ctx, key: string) {
-  log(c, 'ruling', `По решению ведущего — ${rulingLabel(key, c.s.rulings[key])}`);
+/** Уточнённое правило (единое для всех партий, см. rulings.ts). */
+export function ruling(_c: Ctx, key: RuleKey): string {
+  return RULES[key];
 }
 export const toast = (c: Ctx, text: string, tone: 'good' | 'bad' | 'info' = 'info') => c.ev.push({ t: 'toast', text, tone });
 
@@ -130,7 +128,6 @@ export function neighbor(c: Ctx, pid: PlayerId, dir: 'next' | 'prev'): PlayerId 
   return list[j].id;
 }
 export function rightNeighbor(c: Ctx, pid: PlayerId) {
-  logRuling(c, 'rightNeighbor');
   return neighbor(c, pid, ruling(c, 'rightNeighbor') === 'next' ? 'next' : 'prev');
 }
 export function opposite(s: GameState, pid: PlayerId): PlayerId | null {

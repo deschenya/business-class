@@ -3,9 +3,9 @@ import type {
   Pos, Prompt, RoleId, Settings, Bundle,
 } from './types';
 import { COLORS, COLOR_RU, COLOR_RU_PL, LEVEL_RU, ROLE_RU } from './types';
-import { DEFAULT_RULINGS, rulingLabel } from './rulings';
+import { RULES } from './rulings';
 import {
-  type Ctx, C, P, active, ask, assetsValue, cellName, cellOf, charge, die, fmt, fmtSigned, log, logRuling, maxQuote,
+  type Ctx, C, P, active, ask, assetsValue, cellName, cellOf, charge, die, fmt, fmtSigned, log, maxQuote,
   neighbor, netWorth, opposite, pname, posLabel, propValue, propsOf, resolveTarget, rightNeighbor, ruling, setProp,
   setQuote, shuffle, toast, transfer, uid,
 } from './util';
@@ -17,7 +17,6 @@ export interface Setup {
   players: SetupPlayer[];
   roles: Record<RoleId, number | 'host'>; // индекс игрока или ведущий
   settings?: Partial<Settings>;
-  rulings?: Record<string, string>;
   seed?: number;
   keepOrder?: boolean; // очерёдность задаёт ведущий (демо/тесты)
 }
@@ -37,7 +36,7 @@ export function createGame(data: GameData, setup: Setup): ApplyResult {
   const roles = Object.fromEntries(Object.entries(setup.roles).map(([r, v]) => [r, v === 'host' ? 'host' : players[v]?.id ?? 'host'])) as Record<RoleId, PlayerId | 'host'>;
   const s: GameState = {
     v: 1, id: `g${seed.toString(36)}${Date.now().toString(36)}`, title: setup.title || 'Партия', createdAt: Date.now(), updatedAt: Date.now(),
-    data: structuredClone(data), settings, rulings: { ...DEFAULT_RULINGS, ...(setup.rulings || {}) }, roles,
+    data: structuredClone(data), settings, rulings: { ...RULES }, roles,
     players, order: players.map((p) => p.id),
     turn: { n: 1, player: players[0].id, stage: 'pre', dice: null, extra: false, extraOneDie: false, oneDie: false, rolled: false },
     rollIndex: 0, props: {}, loans: [], claims: [], debts: [], auction: null, trades: [], prompts: [], exchange: null, roulette: null,
@@ -46,7 +45,6 @@ export function createGame(data: GameData, setup: Setup): ApplyResult {
   const c: Ctx = { s, ev: [] };
   log(c, 'turn', `Новая партия «${s.title}». Игроков: ${players.length}. Каждому — ${fmt(settings.startMoney)} и по ${settings.startStocks} акции каждого цвета номиналом ${fmt(settings.startQuote)}.`);
   for (const [r, v] of Object.entries(roles)) log(c, 'info', `${ROLE_RU[r as RoleId]}: ${v === 'host' ? 'ведущий' : pname(s, v)}`);
-  log(c, 'ruling', `Решения ведущего по неясным местам правил: ${Object.entries(s.rulings).map(([k, v]) => rulingLabel(k, v)).join('; ')}.`);
   for (const p of players) for (const col of COLORS) s.market.push({ i: s.market.length, turn: 0, player: p.id, color: col, from: settings.startQuote, to: settings.startQuote, reason: 'стартовая' });
   // очерёдность: бросок первого кубика, при равенстве — переброс среди равных
   let contenders = players.map((p) => p.id);
@@ -200,9 +198,7 @@ function land(c: Ctx, pid: PlayerId, pos: Pos) {
 function inTriple(s: GameState, pid: PlayerId, cellId: number, c: Ctx): boolean {
   for (const g of s.data.board.groups) {
     if (!g.cells.includes(cellId)) continue;
-    if (g.cells.includes(21) && g.cells.includes(25) && s.rulings.group21 === 'no') continue;
     if (g.cells.every((id) => { const pr = s.props[id]; return pr && pr.owner === pid && (pr.level === 'branch' || pr.level === 'enterprise'); })) {
-      if (g.cells.includes(21) && g.cells.includes(25)) logRuling(c, 'group21');
       return true;
     }
   }
@@ -246,7 +242,7 @@ function landRuCompany(c: Ctx, pid: PlayerId, id: number) {
   const p = P(s, pid);
   if (!pr) {
     const cost = innerPrice(c, id);
-    ask(c, { to: pid, title: `${cell.name} — свободная фирма`, text: `${cell.kind ?? ''} «${cell.name}». Цена на поле ${fmt(cell.price ?? 0)}; аренда ${fmt(cell.rentSingle ?? 0)}.\n${rulingLabel('innerPrice', s.rulings.innerPrice)}.`, options: [{ id: 'buy', label: `Купить за ${fmt(cost)}`, tone: 'primary', disabled: p.money < cost }, { id: 'skip', label: 'Отказаться' }], ctx: { type: 'buyRu', cell: id, cost } });
+    ask(c, { to: pid, title: `${cell.name} — свободная фирма`, text: `${cell.kind ?? ''} «${cell.name}». Цена на поле ${fmt(cell.price ?? 0)}; аренда ${fmt(cell.rentSingle ?? 0)}.`, options: [{ id: 'buy', label: `Купить за ${fmt(cost)}`, tone: 'primary', disabled: p.money < cost }, { id: 'skip', label: 'Отказаться' }], ctx: { type: 'buyRu', cell: id, cost } });
     return;
   }
   if (pr.owner === pid || pr.owner === 'bank') return;
@@ -316,7 +312,6 @@ function createClaim(c: Ctx, payer: PlayerId, owner: PlayerId, cell: number, amo
   const s = c.s;
   const pr = s.props[cell];
   if (pr?.pledged) {
-    logRuling(c, 'pledgedRent');
     if (ruling(c, 'pledgedRent') === 'none') return;
   }
   if (amount <= 0) return;
@@ -457,7 +452,6 @@ function exchangeRoll(c: Ctx, pid: PlayerId, sum: number) {
   let target = ex.n + sum;
   const len = s.data.board.exchange.length;
   if (target > len) {
-    logRuling(c, 'exOvershoot');
     if (ruling(c, 'exOvershoot') === 'end') {
       log(c, 'market', `${p.name}: бросок ${sum} уводит дальше клетки ${len} — игра на бирже окончена.`, pid);
       ex.done = true;
@@ -495,7 +489,7 @@ function applyExCard(c: Ctx, pid: PlayerId, card: ExCard, payload?: any) {
   const list = active(s);
   const changes: { player: PlayerId; color: Color; from: number; to: number }[] = [];
   const apply = (col: Color, fn: (v: number) => number, why: string) => { for (const pl of list) setQuote(c, pl.id, col, fn(pl.quotes[col]), why, changes); };
-  const halve = (v: number) => { logRuling(c, 'halve'); return ruling(c, 'halve') === 'floor' ? Math.floor(v / 2 / 1000) * 1000 : Math.floor(v / 2); };
+  const halve = (v: number) => { return ruling(c, 'halve') === 'floor' ? Math.floor(v / 2 / 1000) * 1000 : Math.floor(v / 2); };
   const why = `биржевая карточка «${card.text}»`;
   switch (e.op) {
     case 'div': apply((e.color ?? payload?.color) as Color, halve, why); break;
@@ -556,7 +550,6 @@ function rouletteRoll(c: Ctx, pid: PlayerId, sum: number) {
   const laps = Math.floor(r.traveled / order.length);
   log(c, 'info', `Рулетка: ${p.name} — сектор «${sec.label}» (пройдено кругов: ${laps}).`, pid);
   if (sec.type === 'to_bank') {
-    logRuling(c, 'rouletteBank');
     if (ruling(c, 'rouletteBank') === 'exit') return rouletteLeave(c, pid, 52, 'сектор «В БАНК»');
     ask(c, { to: 'host', title: 'Рулетка: сектор «В БАНК»', text: `${p.name} остановился на секторе «В БАНК». Укажите сумму (минус — платёж в банк). Затем игрок выйдет в Банк (52).`, options: [{ id: 'ok', label: 'Применить', tone: 'primary' }], form: { kind: 'amount', step: 1000 }, ctx: { type: 'rlBankHost', player: pid } });
     return;
@@ -586,7 +579,6 @@ function rouletteLeave(c: Ctx, pid: PlayerId, to: number, why: string) {
   p.pos = C(to);
   c.ev.push({ t: 'teleport', player: pid, to: p.pos });
   log(c, 'info', `${p.name} покидает рулетку (${why}) → ${cellName(s, to)}.`, pid);
-  logRuling(c, 'rouletteExitBonus');
   if (ruling(c, 'rouletteExitBonus') === 'yes') land(c, pid, p.pos);
 }
 
@@ -604,7 +596,7 @@ function checkLoans(c: Ctx, pid: PlayerId) {
   }
 }
 function loanOwed(s: GameState, l: Loan) {
-  if (l.kind === 'stocks' && s.rulings.stockLoanRepay === 'stocks' && l.stocks) {
+  if (l.kind === 'stocks' && RULES.stockLoanRepay === ('stocks' as string) && l.stocks) {
     const st = l.stocks;
     return { text: `${st.count} ${COLOR_RU[st.color]} акц.`, can: (p: { stocks: Record<Color, number> }) => p.stocks[st.color] >= st.count };
   }
@@ -613,8 +605,7 @@ function loanOwed(s: GameState, l: Loan) {
 function repay(c: Ctx, l: Loan) {
   const s = c.s;
   const p = P(s, l.player);
-  if (l.kind === 'stocks' && s.rulings.stockLoanRepay === 'stocks' && l.stocks) {
-    logRuling(c, 'stockLoanRepay');
+  if (l.kind === 'stocks' && RULES.stockLoanRepay === ('stocks' as string) && l.stocks) {
     p.stocks[l.stocks.color] -= l.stocks.count;
     log(c, 'money', `${p.name} возвращает банку ${l.stocks.count} ${COLOR_RU[l.stocks.color]} акц. по кредиту.`, p.id);
   } else transfer(c, l.player, 'bank', l.amount, `возврат кредита под залог ${cellName(s, l.cell)}`);
@@ -722,7 +713,6 @@ function onAnswer(c: Ctx, q: Prompt, option: string, payload: any): string | voi
       return;
     case 'buyEnterprise': {
       if (option !== 'buy') return;
-      logRuling(c, 'enterpriseCost');
       if (ruling(c, 'enterpriseCost') === 'receive') { transfer(c, 'bank', pid, x.cost, `предприятие ${cellName(s, x.cell)}`); setProp(c, x.cell, pid, 'enterprise', 0); }
       else { transfer(c, pid, 'bank', x.cost, `предприятие ${cellName(s, x.cell)}`); setProp(c, x.cell, pid, 'enterprise', x.cost); }
       log(c, 'prop', `Реестр: ${pname(s, pid)} — ${cellName(s, x.cell)} (предприятие, карточка предприятия).`, pid);
@@ -731,8 +721,7 @@ function onAnswer(c: Ctx, q: Prompt, option: string, payload: any): string | voi
     }
     case 'buyRu':
       if (option !== 'buy') return;
-      if (cellOf(s, x.cell).type === 'ru_company') logRuling(c, 'innerPrice');
-      transfer(c, pid, 'bank', x.cost, `покупка ${cellName(s, x.cell)}`);
+      if (cellOf(s, x.cell).type === 'ru_company')      transfer(c, pid, 'bank', x.cost, `покупка ${cellName(s, x.cell)}`);
       setProp(c, x.cell, pid, 'firm', x.cost);
       log(c, 'prop', `Реестр: ${pname(s, pid)} — ${cellName(s, x.cell)} (фирма).`, pid);
       return;
@@ -900,7 +889,7 @@ function onAnswer(c: Ctx, q: Prompt, option: string, payload: any): string | voi
       P(s, pid).pos = to;
       c.ev.push({ t: 'teleport', player: pid, to });
       log(c, 'info', `${pname(s, pid)} покидает биржу → ${posLabel(s, to)}.`, pid);
-      if (option !== 'origin') { logRuling(c, 'exitEffect'); if (ruling(c, 'exitEffect') === 'yes') land(c, pid, to); }
+      if (option !== 'origin') { if (ruling(c, 'exitEffect') === 'yes') land(c, pid, to); }
       return;
     }
     case 'rlLeave':
@@ -1224,8 +1213,7 @@ function dispatch(c: Ctx, a: Action): string | void {
       return;
     }
     case 'setRuling':
-      s.rulings[a.key] = a.value;
-      log(c, 'ruling', `Ведущий меняет решение — ${rulingLabel(a.key, a.value)}`);
+      return 'Правила зафиксированы и не меняются в партии';
       return;
     case 'editData': {
       let o: any = s.data;

@@ -81,7 +81,7 @@ export function LoanDialog({ s, pid, onClose }: { s: GameState; pid: PlayerId; o
       {loans.map((l) => (
         <div key={l.id} className="row between">
           <span>№{l.cell}: {l.kind === 'stocks' && l.stocks ? `${l.stocks.count} ${COLOR_RU[l.stocks.color]} акц. (${fmt(l.amount)})` : fmt(l.amount)} · осталось {Math.max(0, l.remaining)} кл.</span>
-          <button className="btn sm gold" disabled={p.money < l.amount && s.rulings.stockLoanRepay !== 'stocks'} onClick={() => dispatch({ type: 'repayLoan', by: pid, loan: l.id })}>Погасить</button>
+          <button className="btn sm gold" disabled={p.money < l.amount} onClick={() => dispatch({ type: 'repayLoan', by: pid, loan: l.id })}>Погасить</button>
         </div>
       ))}
     </Modal>

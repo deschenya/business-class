@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { hasLanServer, myName, useStore } from '../store';
-import { RULINGS, DEFAULT_RULINGS } from '../engine/rulings';
 import { ROLE_RU, type RoleId } from '../engine/types';
 import { TutorToggle } from './Tutor';
 import { PAWN_PALETTE, PawnIcon, colorName, fmt } from './helpers';
@@ -17,7 +16,6 @@ export function SetupScreen() {
   const [quote, setQuote] = useState(10000);
   const [stocks, setStocks] = useState(1);
   const [claim, setClaim] = useState(true);
-  const [rulings, setRulings] = useState({ ...DEFAULT_RULINGS });
   const [title, setTitle] = useState(`Партия ${new Date().toLocaleDateString('ru-RU')}`);
   const [mode, setMode] = useState<'local' | 'host'>('local');
   const [via, setVia] = useState<'p2p' | 'ws'>('p2p');
@@ -35,10 +33,10 @@ export function SetupScreen() {
       try { localStorage.setItem('bk.name', hostName); } catch { /* */ }
       // в сетевой игре роли ведёт хост: состав игроков станет известен только в лобби
       const hostRoles = { banker: 'host', broker: 'host', chairman: 'host', inspector: 'host' } as const;
-      await openLobby(lan ? via : 'p2p', { title, roles: hostRoles, settings, rulings }, null, hostName);
+      await openLobby(lan ? via : 'p2p', { title, roles: hostRoles, settings }, null, hostName);
       return;
     }
-    newGame({ title, players, roles, settings, rulings });
+    newGame({ title, players, roles, settings });
   };
   return (
     <div className="screen setup">
@@ -99,7 +97,7 @@ export function SetupScreen() {
         </section>
         )}
         <details className="advanced glass">
-          <summary>Дополнительные настройки <span className="muted small">— роли ведущих, стартовые ресурсы, спорные правила (можно не трогать)</span></summary>
+          <summary>Дополнительные настройки <span className="muted small">— роли ведущих и стартовые ресурсы (можно не трогать)</span></summary>
           <div className="advanced-grid">
         <section>
           <h2>Роли ведущих</h2>
@@ -118,21 +116,6 @@ export function SetupScreen() {
           <label className="field"><span>Номинал акции</span><input type="number" step={1000} value={quote} onChange={(e) => setQuote(Number(e.target.value))} /><em>{fmt(quote)}</em></label>
           <label className="field"><span>Акций каждого цвета</span><input type="number" min={0} value={stocks} onChange={(e) => setStocks(Number(e.target.value))} /></label>
           <label className="check"><input type="checkbox" checked={claim} onChange={(e) => setClaim(e.target.checked)} /> Аренду нужно требовать до броска следующего игрока (по правилам)</label>
-        </section>
-        <section className="wide">
-          <h2>Решения ведущего по неясным местам правил</h2>
-          <p className="muted small">Буклет не решает эти ситуации однозначно. Выбор записывается в журнал и может быть изменён в панели ведущего.</p>
-          <div className="rulings">
-            {RULINGS.map((r) => (
-              <div key={r.key} className="ruling">
-                <b>{r.title}</b>
-                {r.note && <span className="muted small">{r.note}</span>}
-                <select value={rulings[r.key]} onChange={(e) => setRulings({ ...rulings, [r.key]: e.target.value })}>
-                  {r.options.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
-                </select>
-              </div>
-            ))}
-          </div>
         </section>
           </div>
         </details>

@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
 import type { Color, GameState, Level, RoleId } from '../engine/types';
 import { COLORS, COLOR_RU_PL, LEVEL_RU, ROLE_RU } from '../engine/types';
-import { RULINGS } from '../engine/rulings';
 import { maxQuote, netWorth } from '../engine/engine';
 import { useStore } from '../store';
 import { STOCK_HEX, cls, fmt, pn } from './helpers';
@@ -160,14 +159,6 @@ function HostTab({ s }: { s: GameState }) {
   const owned = useMemo(() => s.data.board.cells.filter((c) => ['company', 'ru_company', 'supermarket', 'hotel'].includes(c.type)), [s.data]);
   return (
     <div className="host-tab">
-      <h4>Решения по правилам</h4>
-      {RULINGS.map((r) => (
-        <label key={r.key} className="field small"><span title={r.note}>{r.title}</span>
-          <select value={s.rulings[r.key]} onChange={(e) => dispatch({ type: 'setRuling', by: 'host', key: r.key, value: e.target.value })}>
-            {r.options.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
-          </select>
-        </label>
-      ))}
       <h4>Корректировка (с записью в журнал)</h4>
       <div className="grid2">
         <select value={pid} onChange={(e) => setPid(e.target.value)}>{s.players.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select>
