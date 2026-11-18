@@ -7,7 +7,7 @@ import { NetPanel } from './NetPanel';
 export function TopBar() {
   const { view, setScreen, net, leave, setDemo } = useStore();
   const [sound, setSound] = useState(sfx.on);
-  const [netOpen, setNetOpen] = useState(false);
+  const [netOpen, setNetOpen] = useState(net.mode === 'host');
   const [follow, setFollow] = useState(true);
   if (!view) return null;
   const exit = () => { setDemo(null); if (net.mode !== 'local' && !confirm('Выйти из сетевой игры?')) return; if (net.mode !== 'local') leave(); setScreen('menu'); };
@@ -22,12 +22,12 @@ export function TopBar() {
         <button onClick={() => sceneRef?.topView()} title="Сверху">Сверху</button>
         <button className={follow ? 'on' : ''} onClick={() => { const f = !follow; setFollow(f); if (sceneRef) sceneRef.follow = f; }} title="Камера следует за фишкой">Следить</button>
       </div>
-      <button className={`btn sm ${net.status === 'online' ? 'online' : ''}`} onClick={() => setNetOpen(!netOpen)}>
-        {net.mode === 'local' ? 'Сеть: выкл' : net.mode === 'host' ? `Хост ${net.code ?? ''} · ${net.peers.length}` : `Клиент ${net.code ?? ''}`}
-      </button>
+      {net.mode !== 'local' && <button className={`btn sm ${net.status === 'online' ? 'online' : ''}`} onClick={() => setNetOpen(!netOpen)}>
+        {net.mode === 'host' ? `Хост ${net.code ?? ''} · ${net.peers.length}` : `Клиент ${net.code ?? ''}`}
+      </button>}
       <button className="btn sm" onClick={() => setScreen('rules')}>Правила</button>
       <button className="icon-btn" onClick={() => setSound(sfx.toggle())} title="Звук">{sound ? '🔊' : '🔇'}</button>
-      {netOpen && <NetPanel onClose={() => setNetOpen(false)} />}
+      {netOpen && net.mode !== 'local' && <NetPanel onClose={() => setNetOpen(false)} />}
     </div>
   );
 }

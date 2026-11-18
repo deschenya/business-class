@@ -312,3 +312,14 @@ textarea.json { width: 100%; height: 60vh; font-family: monospace; font-size: 12
 .sex { display: inline-flex; border: 1px solid var(--line); border-radius: 99px; overflow: hidden; }
 .sex button { width: 34px; padding: 4px 0; background: transparent; border: none; color: var(--muted); font-weight: 800; cursor: pointer; }
 .sex button.on { background: rgba(217,180,90,.2); color: var(--gold2); }
+
+.mode-pick { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.mode-card { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding: 18px 20px; text-align: left; cursor: pointer; color: inherit; font: inherit; border: 1px solid var(--line); transition: border-color .2s, transform .15s, box-shadow .2s; }
+.mode-card b { font-family: 'Playfair Display', serif; font-size: 19px; }
+.mode-card:hover { border-color: var(--gold); transform: translateY(-1px); }
+.mode-card.on { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold), 0 14px 40px rgba(0,0,0,.5), inset 0 0 40px rgba(217,180,90,.08); }
+.mode-ico { font-size: 26px; }
+.seg span[role=button] { padding: 4px 10px; cursor: pointer; color: var(--muted); font-weight: 600; border-right: 1px solid var(--line); }
+.seg span[role=button]:last-child { border-right: none; }
+.seg span[role=button].on { background: rgba(217,180,90,.18); color: var(--gold2); }
+@media (max-width: 900px) { .mode-pick { grid-template-columns: 1fr; } }

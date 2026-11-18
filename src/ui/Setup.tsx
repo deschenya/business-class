@@ -17,7 +17,8 @@ export function SetupScreen() {
   const [claim, setClaim] = useState(true);
   const [rulings, setRulings] = useState({ ...DEFAULT_RULINGS });
   const [title, setTitle] = useState(`Партия ${new Date().toLocaleDateString('ru-RU')}`);
-  const [online, setOnline] = useState<'none' | 'ws' | 'p2p'>('none');
+  const [mode, setMode] = useState<'local' | 'host'>('local');
+  const [via, setVia] = useState<'p2p' | 'ws'>('p2p');
   const [lan, setLan] = useState(false);
   useEffect(() => { hasLanServer().then(setLan); }, []);
   const upd = (i: number, p: Partial<SetupPlayer>) => setPlayers((l) => l.map((x, j) => (j === i ? { ...x, ...p } : x)));
@@ -27,7 +28,7 @@ export function SetupScreen() {
     setPlayers([...players, { name: NAMES[i] ?? `Игрок ${i + 1}`, color, avatar: '', lady: false }]);
   };
   const start = async () => {
-    if (online !== 'none' && net.mode !== 'host') await hostOnline(online);
+    if (mode === 'host' && net.mode !== 'host') await hostOnline(lan ? via : 'p2p');
     newGame({ title, players, roles, settings: { startMoney: money, startQuote: quote, startStocks: stocks, rentNeedsClaim: claim }, rulings });
   };
   return (
@@ -38,6 +39,24 @@ export function SetupScreen() {
         <input className="title-input" value={title} onChange={(e) => setTitle(e.target.value)} />
       </header>
       <div className="setup-grid">
+        <section className="mode-pick wide">
+          <button className={`mode-card glass ${mode === 'local' ? 'on' : ''}`} onClick={() => setMode('local')}>
+            <span className="mode-ico">🖥️</span>
+            <b>На одном устройстве</b>
+            <span className="muted small">Все игроки ходят по очереди за этим экраном. Интернет не нужен.</span>
+          </button>
+          <button className={`mode-card glass ${mode === 'host' ? 'on' : ''}`} onClick={() => setMode('host')}>
+            <span className="mode-ico">🌐</span>
+            <b>Хост — играть по сети</b>
+            <span className="muted small">Вы создаёте комнату, друзья открывают ссылку на своих устройствах и выбирают фишки. Партия хранится у вас.</span>
+            {mode === 'host' && lan && (
+              <span className="seg sm" onClick={(e) => e.stopPropagation()}>
+                <span role="button" className={via === 'p2p' ? 'on' : ''} onClick={() => setVia('p2p')}>Через интернет</span>
+                <span role="button" className={via === 'ws' ? 'on' : ''} onClick={() => setVia('ws')}>В локальной сети</span>
+              </span>
+            )}
+          </button>
+        </section>
         <section className="glass card">
           <h2>Игроки <span className="muted">({players.length})</span></h2>
           <p className="muted small">По правилам — 2–4 игрока; при большем числе добавьте фишки вручную.</p>
@@ -79,17 +98,6 @@ export function SetupScreen() {
           <label className="field"><span>Номинал акции</span><input type="number" step={1000} value={quote} onChange={(e) => setQuote(Number(e.target.value))} /><em>{fmt(quote)}</em></label>
           <label className="field"><span>Акций каждого цвета</span><input type="number" min={0} value={stocks} onChange={(e) => setStocks(Number(e.target.value))} /></label>
           <label className="check"><input type="checkbox" checked={claim} onChange={(e) => setClaim(e.target.checked)} /> Аренду нужно требовать до броска следующего игрока (по правилам)</label>
-          <h2 style={{ marginTop: 18 }}>Игра по сети</h2>
-          <div className="seg">
-            <button className={online === 'none' ? 'on' : ''} onClick={() => setOnline('none')}>За одним экраном</button>
-            {lan && <button className={online === 'ws' ? 'on' : ''} onClick={() => setOnline('ws')}>Локальный хост</button>}
-            <button className={online === 'p2p' ? 'on' : ''} onClick={() => setOnline('p2p')}>Через интернет (P2P)</button>
-          </div>
-          <p className="muted small">
-            {online === 'ws' && 'Требуется запущенный сервер «npm run host»; друг открывает адрес вашего компьютера в локальной сети.'}
-            {online === 'p2p' && 'Прямое соединение браузеров (WebRTC). Друг вводит код комнаты — сервер не нужен.'}
-            {online === 'none' && 'Все игроки ходят по очереди на этом компьютере. Сеть можно включить позже в игре.'}
-          </p>
         </section>
         <section className="glass card wide">
           <h2>Решения ведущего по неясным местам правил</h2>
@@ -108,7 +116,7 @@ export function SetupScreen() {
         </section>
       </div>
       <footer className="setup-foot">
-        <button className="btn gold big" onClick={start} disabled={players.length < 2}>Начать партию →</button>
+        <button className="btn gold big" onClick={start} disabled={players.length < 2}>{mode === 'host' ? 'Создать комнату и начать →' : 'Начать партию →'}</button>
       </footer>
     </div>
   );

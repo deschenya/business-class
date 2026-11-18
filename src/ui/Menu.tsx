@@ -1,11 +1,19 @@
-import { useState } from 'react';
-import { saves, useStore } from '../store';
+import { useEffect, useState } from 'react';
+import { hasLanServer, saves, useStore } from '../store';
 
 export function Menu() {
-  const { setScreen, loadState, toast } = useStore();
+  const { setScreen, loadState, toast, hostOnline, leave } = useStore();
+  const [lan, setLan] = useState(false);
+  useEffect(() => { hasLanServer().then(setLan); }, []);
   const [list, setList] = useState(saves.list());
   const last = list[0];
-  const open = (id: string) => { const s = saves.get(id); if (s) loadState(s); else toast('Сохранение повреждено', 'bad'); };
+  const open = async (id: string, asHost = false) => {
+    const s = saves.get(id);
+    if (!s) return toast('Сохранение повреждено', 'bad');
+    leave();
+    if (asHost) await hostOnline(lan ? 'ws' : 'p2p');
+    loadState(s);
+  };
   return (
     <div className="menu" style={{ backgroundImage: 'url(art/title_bg.jpg)' }}>
       <div className="menu-shade" />
@@ -29,12 +37,13 @@ export function Menu() {
         {list.length === 0 && <p className="muted small">Пока нет сохранённых партий. Партия сохраняется автоматически после каждого действия.</p>}
         <div className="saves-list">
           {list.map((m) => (
-            <div key={m.id} className="save-row" onClick={() => open(m.id)}>
+            <div key={m.id} className="save-row" title="Продолжить на этом устройстве" onClick={() => open(m.id)}>
               <div className="save-main">
                 <b>{m.title}</b>
                 <span className="muted small">{m.players.join(', ')}</span>
                 <span className="muted small">ход {m.turn} · {new Date(m.updatedAt).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
               </div>
+              <button className="btn sm" title="Продолжить как хост — друзья подключатся по ссылке" onClick={(e) => { e.stopPropagation(); open(m.id, true); }}>🌐 Хост</button>
               <button className="icon-btn" title="Удалить" onClick={(e) => { e.stopPropagation(); if (confirm(`Удалить сохранение «${m.title}»?`)) { saves.remove(m.id); setList(saves.list()); } }}>✕</button>
             </div>
           ))}
