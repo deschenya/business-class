@@ -351,3 +351,31 @@ textarea.json { width: 100%; height: 60vh; font-family: monospace; font-size: 12
 .lobby-start { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
 .spinner.sm { display: inline-block; width: 14px; height: 14px; border-width: 2px; vertical-align: -2px; margin-right: 6px; }
 .seat-pick { position: absolute; top: 64px; left: 50%; transform: translateX(-50%); z-index: 9; padding: 14px 18px; display: flex; flex-direction: column; gap: 8px; align-items: center; border-color: var(--gold); }
+
+/* ------------------------------------------------ обучение и подсказки хода */
+.tutor { position: absolute; left: 312px; bottom: 96px; width: 340px; z-index: 7; padding: 14px 16px; border-color: rgba(120, 190, 255, .45); box-shadow: 0 0 0 1px rgba(120,190,255,.15), var(--shadow); animation: promptIn .35s; }
+.tutor-head { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.tutor-head b { font-family: 'Playfair Display', serif; font-size: 16px; color: #cfe6ff; }
+.tutor-ico { font-size: 20px; }
+.tutor p { margin: 4px 0 10px; line-height: 1.5; font-size: 13px; color: #e6dccb; }
+.tutor-toggle { padding: 8px 12px; border-radius: 10px; background: rgba(120,190,255,.08); border: 1px solid rgba(120,190,255,.25); }
+.btn.on-gold { border-color: rgba(120,190,255,.6); color: #cfe6ff; }
+.turn-banner { position: absolute; top: 34%; left: 50%; transform: translate(-50%, -50%); z-index: 8; display: flex; align-items: center; gap: 14px; padding: 16px 26px; border-radius: 18px; background: rgba(15,10,6,.86); border: 2px solid var(--c); box-shadow: 0 0 60px color-mix(in srgb, var(--c) 35%, transparent), var(--shadow); pointer-events: none; animation: bannerIn 1.9s ease forwards; }
+.turn-banner b { display: block; font-family: 'Playfair Display', serif; font-size: 30px; }
+.turn-banner span { color: var(--muted); font-size: 13px; }
+@keyframes bannerIn { 0% { opacity: 0; transform: translate(-50%, -40%) scale(.92); } 12% { opacity: 1; transform: translate(-50%, -50%) scale(1); } 80% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -56%); } }
+.ab-hint { color: var(--muted); display: inline-flex; align-items: center; gap: 4px; }
+.tag.you { color: #cfe6ff; border-color: rgba(120,190,255,.4); background: rgba(120,190,255,.1); }
+.advanced { grid-column: 1 / -1; }
+.advanced > summary { cursor: pointer; list-style: none; padding: 14px 20px; font-family: 'Playfair Display', serif; font-size: 18px; color: var(--gold2); }
+.advanced > summary::-webkit-details-marker { display: none; }
+.advanced > summary::after { content: ' ▾'; color: var(--muted); }
+.advanced[open] > summary::after { content: ' ▴'; }
+.advanced-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding: 0 20px 20px; }
+.advanced-grid .wide { grid-column: 1 / -1; }
+.setup-foot { gap: 14px; align-items: center; }
+@media (max-width: 1250px) { .tutor { left: 270px; width: 300px; } }
+@media (max-width: 900px) { .tutor { left: 12px; bottom: 150px; } .advanced-grid { grid-template-columns: 1fr; } }
+.tutor.inline { position: static; width: auto; margin: 10px 0 4px; padding: 10px 12px; border-radius: 10px; background: rgba(120,190,255,.08); border: 1px solid rgba(120,190,255,.3); box-shadow: none; text-align: left; }
+.fan-title .tutor.inline { max-width: 520px; }
+.prompt, .fan-title, .modal { background: rgba(22, 15, 10, .94); }

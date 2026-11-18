@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { GameState, Player } from '../engine/types';
 import { COLORS, LEVEL_RU, ROLE_RU, type RoleId } from '../engine/types';
 import { netWorth, propValue } from '../engine/engine';
+import { useStore } from '../store';
 import { PawnIcon, STOCK_HEX, cls, fmt, pn } from './helpers';
 
 function Money({ v }: { v: number }) {
@@ -35,6 +36,9 @@ export function PlayersPanel({ s }: { s: GameState }) {
 }
 
 function PlayerCard({ s, p, open, toggle }: { s: GameState; p: Player; open: boolean; toggle: () => void }) {
+  const net = useStore((st) => st.net);
+  const can = useStore((st) => st.can);
+  const online = net.mode !== 'local';
   const props = Object.values(s.props).filter((x) => x.owner === p.id);
   const roles = (Object.keys(s.roles) as RoleId[]).filter((r) => s.roles[r] === p.id);
   const loans = s.loans.filter((l) => l.player === p.id && l.status === 'active');
@@ -58,6 +62,8 @@ function PlayerCard({ s, p, open, toggle }: { s: GameState; p: Player; open: boo
         ))}
       </div>
       <div className="pcard-tags">
+        {online && can(p.id) && <span className="tag you">вы</span>}
+        {online && !p.bankrupt && !net.seats[p.id] && <span className="tag bad" title="Игрок отключился — фишка ждёт переподключения">нет связи</span>}
         {props.length > 0 && <span className="tag">🏢 {props.length}</span>}
         {loans.length > 0 && <span className="tag warn">залог {loans.length}</span>}
         {debt > 0 && <span className="tag bad">долг {fmt(debt)}</span>}

@@ -10,6 +10,8 @@ import { Tooltip } from './Tooltip';
 import { TopBar } from './TopBar';
 import type { GameEvent, GameState } from '../engine/types';
 import { PawnIcon } from './helpers';
+import { TutorCard } from './Tutor';
+import { sfx } from './sound';
 
 export let sceneRef: TableScene | null = null;
 let revealResolve: (() => void) | null = null;
@@ -74,6 +76,8 @@ export function GameScreen() {
       <CardReveal s={view} />
       {(pinned || hover) && <Tooltip s={view} h={(pinned || hover)!} pinned={!!pinned} onClose={() => setPinned(null)} />}
       <SeatPicker s={view} />
+      <TutorCard s={view} busy={busy} />
+      <TurnBanner s={view} busy={busy} />
       {demo && <div className="demo-caption glass"><b>Демо {demo.step}/{demo.total}</b> {demo.caption}</div>}
     </div>
   );
@@ -92,6 +96,36 @@ function SeatPicker({ s }: { s: GameState }) {
       <div className="row wrap">
         {free.map((p) => <button key={p.id} className="btn" onClick={() => claim(p.id)}><PawnIcon color={p.color} size={20} />{p.name}</button>)}
       </div>
+    </div>
+  );
+}
+
+/** Короткий баннер при смене хода: «Ваш ход!» или «Ходит Борис». */
+function TurnBanner({ s, busy }: { s: GameState; busy: boolean }) {
+  const can = useStore((st) => st.can);
+  const mode = useStore((st) => st.net.mode);
+  const [shown, setShown] = useState<{ key: string; text: string; sub: string; color: string } | null>(null);
+  const key = `${s.turn.n}:${s.turn.player}`;
+  const last = useRef('');
+  useEffect(() => {
+    if (busy || s.turn.stage === 'over' || last.current === key) return;
+    const first = last.current === '';
+    last.current = key;
+    if (first && s.turn.n > 1) return; // не мешаем при загрузке партии
+    const p = s.players.find((x) => x.id === s.turn.player)!;
+    const mine = can(p.id);
+    const text = mode === 'local' ? `Ход: ${p.name}` : mine ? 'Ваш ход!' : `Ходит ${p.name}`;
+    const sub = mode === 'local' ? 'передайте устройство игроку' : mine ? 'бросайте кубики, когда будете готовы' : 'ждём его решения';
+    setShown({ key, text, sub, color: p.color });
+    if (mine) sfx.good();
+    const t = setTimeout(() => setShown((x) => (x?.key === key ? null : x)), 1900);
+    return () => clearTimeout(t);
+  }, [key, busy]); // eslint-disable-line react-hooks/exhaustive-deps
+  if (!shown) return null;
+  return (
+    <div className="turn-banner" style={{ ['--c' as any]: shown.color }} key={shown.key}>
+      <PawnIcon color={shown.color} size={44} />
+      <div><b>{shown.text}</b><span>{shown.sub}</span></div>
     </div>
   );
 }

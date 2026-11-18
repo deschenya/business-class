@@ -74,7 +74,8 @@ export function ActionBar({ s, busy }: { s: GameState; busy: boolean }) {
           {s.turn.stage === 'post' && mine && !busy && !s.prompts.length && (
             <button className="btn gold" disabled={debts.some((d) => d.debtor === cur.id)} onClick={() => dispatch({ type: 'endTurn', by: cur.id })}>Завершить ход →</button>
           )}
-          {!mine && !over && <span className="muted">Ход игрока {cur.name}…</span>}
+          {!mine && !over && <span className="ab-hint"><span className="spinner sm" />Ходит {cur.name} — ждём</span>}
+          {mine && !busy && !over && s.prompts.length > 0 && !roll && <span className="ab-hint">Сделайте выбор в окне ↑</span>}
         </div>
         {actor && !busy && (
           <div className="ab-ops">

@@ -1,6 +1,7 @@
 import { useStore, type LobbySeat } from '../store';
 import { PAWN_PALETTE, PawnIcon, colorName, cls } from './helpers';
 import { InviteBox } from './NetPanel';
+import { TutorToggle } from './Tutor';
 
 export function LobbyScreen() {
   const { lobby, net, lobbyEdit, lobbyAddLocal, lobbyRemove, lobbyClaim, lobbySit, lobbyStart, leave, setScreen } = useStore();
@@ -64,6 +65,7 @@ export function LobbyScreen() {
           {!host && !lobby.resume && !hasSeat && <button className="btn gold" onClick={lobbySit}>Сесть за стол</button>}
         </div>
 
+        <TutorToggle label="Обучение на этом устройстве: подсказки по правилам во время хода" />
         <div className="lobby-foot">
           <button className="btn ghost" onClick={exit}>{host ? 'Закрыть комнату' : 'Выйти'}</button>
           <div className="spacer" />

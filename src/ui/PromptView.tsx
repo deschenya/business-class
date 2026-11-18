@@ -5,6 +5,7 @@ import { resolveTarget } from '../engine/util';
 import { useStore } from '../store';
 import { STOCK_HEX, fmt, pn, cls } from './helpers';
 import { sfx } from './sound';
+import { TutorInline } from './Tutor';
 
 export function PromptView({ s }: { s: GameState }) {
   const can = useStore((st) => st.can);
@@ -32,6 +33,7 @@ function PromptCard({ s, q, by }: { s: GameState; q: Prompt; by: string }) {
         <div className="prompt-who">{pn(s, who)}{['banker', 'broker', 'chairman', 'inspector'].includes(q.to) ? ` · ${q.to === 'banker' ? 'банкир' : q.to === 'broker' ? 'брокер' : q.to === 'chairman' ? 'председатель' : 'инспектор'}` : ''}</div>
         <h3>{q.title}</h3>
         {q.text && <p className="prompt-text">{q.text}</p>}
+        <TutorInline s={s} />
         {f && <FormView s={s} q={q} value={payload} set={setPayload} />}
         {err && <p className="err">{err}</p>}
         <div className="prompt-options">
@@ -122,6 +124,7 @@ function CardFan({ s, q, onPick, color }: { s: GameState; q: Prompt; onPick: (i:
         <div className="prompt-who">{pn(s, resolveTarget(s, q.to))}</div>
         <h3>{q.title}</h3>
         <p className="muted">{q.text}</p>
+        <TutorInline s={s} />
       </div>
       <div className={cls('fan', isEx && 'ex', f.faceUp && 'up')}>
         {Array.from({ length: n }, (_, i) => {

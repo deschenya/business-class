@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { hasLanServer, myName, useStore } from '../store';
 import { RULINGS, DEFAULT_RULINGS } from '../engine/rulings';
 import { ROLE_RU, type RoleId } from '../engine/types';
+import { TutorToggle } from './Tutor';
 import { PAWN_PALETTE, PawnIcon, colorName, fmt } from './helpers';
 import type { SetupPlayer } from '../engine/engine';
 
@@ -66,7 +67,7 @@ export function SetupScreen() {
           </button>
         </section>
 {mode === 'local' ? (
-        <section className="glass card">
+        <section className="glass card wide">
           <h2>Игроки <span className="muted">({players.length})</span></h2>
           <p className="muted small">По правилам — 2–4 игрока; при большем числе добавьте фишки вручную.</p>
           {players.map((p, i) => (
@@ -91,13 +92,16 @@ export function SetupScreen() {
           {players.length < 8 && <button className="btn" onClick={add}>+ Добавить фишку</button>}
         </section>
         ) : (
-        <section className="glass card">
+        <section className="glass card wide">
           <h2>Игроки</h2>
           <p className="muted small">Игроки соберутся в лобби: каждый, кто откроет вашу ссылку, получит свою фишку и сам выберет имя и цвет. Можно добавить и игроков за этим устройством.</p>
           <label className="field"><span>Ваше имя</span><input value={hostName} onChange={(e) => setHostName(e.target.value)} placeholder="Хост" /></label>
         </section>
         )}
-        <section className="glass card">
+        <details className="advanced glass">
+          <summary>Дополнительные настройки <span className="muted small">— роли ведущих, стартовые ресурсы, спорные правила (можно не трогать)</span></summary>
+          <div className="advanced-grid">
+        <section>
           <h2>Роли ведущих</h2>
           <p className="muted small">Один человек может совмещать роли. «Ведущий» — тот, кто управляет хостом.</p>
           {(Object.keys(ROLE_RU) as RoleId[]).map((r) => (
@@ -115,7 +119,7 @@ export function SetupScreen() {
           <label className="field"><span>Акций каждого цвета</span><input type="number" min={0} value={stocks} onChange={(e) => setStocks(Number(e.target.value))} /></label>
           <label className="check"><input type="checkbox" checked={claim} onChange={(e) => setClaim(e.target.checked)} /> Аренду нужно требовать до броска следующего игрока (по правилам)</label>
         </section>
-        <section className="glass card wide">
+        <section className="wide">
           <h2>Решения ведущего по неясным местам правил</h2>
           <p className="muted small">Буклет не решает эти ситуации однозначно. Выбор записывается в журнал и может быть изменён в панели ведущего.</p>
           <div className="rulings">
@@ -130,8 +134,11 @@ export function SetupScreen() {
             ))}
           </div>
         </section>
+          </div>
+        </details>
       </div>
       <footer className="setup-foot">
+        <TutorToggle />
         <button className="btn gold big" onClick={start} disabled={mode === 'local' && players.length < 2}>{mode === 'host' ? 'Создать комнату →' : 'Начать партию →'}</button>
       </footer>
     </div>
