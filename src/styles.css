@@ -425,30 +425,26 @@ textarea.json { width: 100%; height: 60vh; font-family: monospace; font-size: 12
 .save-row.room .save-go { color: #cfe6ff; border-color: rgba(120,190,255,.4); }
 
 /* ================================================ общая оболочка экранов меню/входа/лобби */
-.shell { position: fixed; inset: 0; overflow: hidden; display: flex; justify-content: center; align-items: center; background: #0d0907; animation: fadeIn .5s; }
+.shell { position: fixed; inset: 0; overflow: hidden; display: flex; justify-content: center; align-items: center; background: #0d0907; animation: fadeIn .25s; }
 .shell-bg { position: absolute; inset: -5%; background-size: cover; background-position: center; animation: kenburns 38s ease-in-out infinite alternate; will-change: transform; }
 @keyframes kenburns { from { transform: scale(1.02) translate(0, 0); } to { transform: scale(1.12) translate(-2%, -1.5%); } }
 .shell-shade { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 42%, rgba(10,6,3,.5) 0%, rgba(10,6,3,.8) 55%, rgba(10,6,3,.95) 100%); }
 .shell-particles { position: absolute; inset: 0; pointer-events: none; }
 .shell-particles .pt { position: absolute; bottom: -40px; opacity: 0; animation: rise linear infinite; }
-.pt.spark { border-radius: 50%; background: radial-gradient(circle, #fff1c2 0%, rgba(255,200,90,.6) 40%, rgba(255,200,90,0) 72%); }
-.pt.coin { border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fff3c4 0%, #e3b44e 45%, #8a6418 100%); box-shadow: inset 0 0 0 2px rgba(110,70,10,.55), 0 0 12px rgba(255,200,90,.35); animation-name: riseCoin; }
-.pt.die { border-radius: 4px; background: radial-gradient(circle at 28% 28%, #2a2a2a 11%, transparent 13%), radial-gradient(circle at 50% 50%, #2a2a2a 11%, transparent 13%), radial-gradient(circle at 72% 72%, #2a2a2a 11%, transparent 13%), linear-gradient(145deg, #fbf4e3, #d9ccb0); box-shadow: 0 4px 10px rgba(0,0,0,.4); animation-name: riseDie; }
-@keyframes rise { 0% { transform: translateY(0); opacity: 0; } 10% { opacity: .85; } 85% { opacity: .5; } 100% { transform: translateY(-112vh) translateX(30px); opacity: 0; } }
-@keyframes riseCoin { 0% { transform: translateY(0) rotateY(0); opacity: 0; } 10% { opacity: .8; } 85% { opacity: .45; } 100% { transform: translateY(-112vh) rotateY(1080deg); opacity: 0; } }
-@keyframes riseDie { 0% { transform: translateY(0) rotate(0); opacity: 0; } 10% { opacity: .7; } 85% { opacity: .4; } 100% { transform: translateY(-112vh) rotate(620deg); opacity: 0; } }
+.pt.spark { border-radius: 50%; background: radial-gradient(circle, #fff1c2 0%, rgba(255,200,90,.55) 45%, rgba(255,200,90,0) 75%); box-shadow: 0 0 6px rgba(255,205,110,.45); }
+@keyframes rise { 0% { transform: translateY(0) translateX(0); opacity: 0; } 12% { opacity: .7; } 50% { transform: translateY(-56vh) translateX(18px); } 85% { opacity: .35; } 100% { transform: translateY(-112vh) translateX(-6px); opacity: 0; } }
 .shell-col { position: relative; z-index: 1; width: min(560px, 92vw); max-height: 100vh; display: flex; flex-direction: column; align-items: center; gap: 18px; padding: 3vh 0; }
 .shell-col.wide { width: min(800px, 94vw); }
-.shell-logo { width: min(460px, 80vw, 40vh); filter: drop-shadow(0 14px 32px rgba(0,0,0,.65)); animation: logoDrop .95s cubic-bezier(.2,1.45,.4,1) both, float 6s ease-in-out 1s infinite; }
+.shell-logo { width: min(460px, 80vw, 40vh); filter: drop-shadow(0 14px 32px rgba(0,0,0,.65)); animation: logoDrop .5s cubic-bezier(.2,1.45,.4,1) both, float 6s ease-in-out .5s infinite; }
 .shell-logo.small { width: min(300px, 60vw, 24vh); }
 @keyframes logoDrop { 0% { opacity: 0; transform: translateY(-70px) scale(.7) rotate(-7deg); } 55% { opacity: 1; } 100% { opacity: 1; transform: none; } }
-.enter { animation: fadeUp .6s cubic-bezier(.2,1.25,.4,1) both; animation-delay: calc(.4s + var(--i, 0) * 85ms); }
+.enter { animation: fadeUp .32s cubic-bezier(.2,1.25,.4,1) both; animation-delay: calc(.12s + var(--i, 0) * 40ms); }
 @keyframes fadeUp { from { opacity: 0; transform: translateY(20px) scale(.97); } }
 .shell .menu-buttons { width: 100%; align-items: center; }
 .shell .menu-buttons .btn.big { min-width: 280px; font-size: 17px; }
 .shell .menu-links { justify-content: center; }
 .btn.shine { position: relative; overflow: hidden; }
-.btn.shine::after { content: ''; position: absolute; top: 0; left: -60%; width: 40%; height: 100%; background: linear-gradient(100deg, transparent, rgba(255,255,255,.6), transparent); transform: skewX(-20deg); animation: shine 3.4s ease-in-out 1.2s infinite; pointer-events: none; }
+.btn.shine::after { content: ''; position: absolute; top: 0; left: -60%; width: 40%; height: 100%; background: linear-gradient(100deg, transparent, rgba(255,255,255,.6), transparent); transform: skewX(-20deg); animation: shine 3.4s ease-in-out .6s infinite; pointer-events: none; }
 @keyframes shine { 0%, 62% { left: -60%; } 100% { left: 135%; } }
 .btn.big:hover:not(:disabled) { transform: translateY(-2px) scale(1.02); }
 .shell .saves { width: 100%; padding: 14px 16px; max-height: 36vh; display: flex; flex-direction: column; gap: 0; }
