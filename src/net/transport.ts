@@ -6,10 +6,10 @@ import type { Action, GameEvent, GameState, PlayerId } from '../engine/types';
 export type Seats = Record<PlayerId, string | null>; // контролёр места: 'host' | id клиента | null
 
 /** Место в лобби. owner: 'host' | id клиента | null (свободно). */
-export interface LobbySeat { id: string; name: string; color: string; lady: boolean; owner: string | null }
+export interface LobbySeat { id: string; name: string; color: string; lady: boolean; owner: string | null; token?: string }
 export interface Lobby { title: string; seats: LobbySeat[]; resume: boolean }
 export type NetMsg =
-  | { t: 'hello'; name: string }
+  | { t: 'hello'; name: string; token?: string }
   | { t: 'welcome'; you: string; state: GameState | null; seats: Seats; title: string; lobby: Lobby | null }
   | { t: 'lobby'; lobby: Lobby | null }
   | { t: 'seatEdit'; seat: string; name?: string; color?: string; lady?: boolean }
@@ -74,6 +74,7 @@ export class WsHost implements HostTransport {
 
 export class WsClient implements ClientTransport {
   ws!: WebSocket;
+  private closed = false;
   onMsg = (_: NetMsg) => {};
   onClose = () => {};
   constructor(private code: string, private server: string | null) {}
@@ -82,16 +83,44 @@ export class WsClient implements ClientTransport {
       this.ws = new WebSocket(wsUrl(this.server, `room=${this.code}&role=client`));
       this.ws.onopen = () => res();
       this.ws.onerror = () => rej(new Error('Не удалось подключиться к хосту'));
-      this.ws.onclose = () => this.onClose();
+      this.ws.onclose = () => { if (!this.closed) { this.closed = true; this.onClose(); } };
       this.ws.onmessage = (e) => { const m = JSON.parse(e.data); if (m.t === '_error') { rej(new Error(m.text)); return; } this.onMsg(m); };
     });
   }
   send(m: NetMsg) { this.ws?.readyState === 1 && this.ws.send(JSON.stringify(m)); }
-  close() { this.ws?.close(); }
+  close() { this.closed = true; this.ws?.close(); }
 }
 
 // ---------------------------------------------------------------- P2P (WebRTC)
 const PEER_PREFIX = 'bizclass-3d-';
+/** Понятные сообщения вместо кодов ошибок PeerJS. */
+export function p2pError(e: any): Error & { code?: string } {
+  const t = e?.type ?? '';
+  const text: Record<string, string> = {
+    'network': 'Нет связи с сервером соединения. Проверьте интернет и попробуйте ещё раз.',
+    'server-error': 'Сервер соединения временно недоступен. Попробуйте ещё раз.',
+    'socket-error': 'Сервер соединения временно недоступен. Попробуйте ещё раз.',
+    'socket-closed': 'Связь с сервером соединения прервалась.',
+    'peer-unavailable': 'Комната не найдена: хост ещё не открыл её или уже закрыл.',
+    'unavailable-id': 'Этот код комнаты сейчас занят.',
+    'browser-incompatible': 'Браузер не поддерживает прямое соединение (WebRTC).',
+    'webrtc': 'Не удалось установить прямое соединение между браузерами.',
+  };
+  const err = new Error(text[t] ?? `Ошибка соединения${t ? ` (${t})` : ''}`) as Error & { code?: string };
+  err.code = t;
+  return err;
+}
+/** Держим связь с сигнальным сервером: при обрыве переподключаемся сами. */
+function keepAlive(peer: any) {
+  let tries = 0;
+  peer.on('disconnected', () => {
+    if (peer.destroyed || tries > 20) return;
+    tries++;
+    setTimeout(() => { if (!peer.destroyed && peer.disconnected) try { peer.reconnect(); } catch { /* */ } }, Math.min(1000 * tries, 8000));
+  });
+  peer.on('open', () => { tries = 0; });
+}
+
 export class P2PHost implements HostTransport {
   kind = 'p2p' as const;
   peer: any;
@@ -102,41 +131,53 @@ export class P2PHost implements HostTransport {
   async start(code: string) {
     const { Peer } = await import('peerjs');
     return new Promise<void>((res, rej) => {
+      let opened = false;
       this.peer = new Peer(PEER_PREFIX + code);
-      this.peer.on('open', () => res());
-      this.peer.on('error', (e: any) => rej(new Error('P2P: ' + (e?.type ?? e))));
+      keepAlive(this.peer);
+      this.peer.on('open', () => { if (!opened) { opened = true; res(); } });
+      this.peer.on('error', (e: any) => { if (!opened) rej(p2pError(e)); });
       this.peer.on('connection', (conn: any) => {
         const cid = conn.peer as string;
         conn.on('open', () => { this.conns.set(cid, conn); this.onJoin(cid); });
         conn.on('data', (d: any) => this.onMsg(cid, typeof d === 'string' ? JSON.parse(d) : d));
-        conn.on('close', () => { this.conns.delete(cid); this.onLeave(cid); });
+        const gone = () => { if (this.conns.get(cid) === conn) { this.conns.delete(cid); this.onLeave(cid); } };
+        conn.on('close', gone);
+        conn.on('error', gone);
       });
     });
   }
-  send(cid: string, m: NetMsg) { this.conns.get(cid)?.send(JSON.stringify(m)); }
-  broadcast(m: NetMsg) { const s = JSON.stringify(m); for (const c of this.conns.values()) c.send(s); }
+  send(cid: string, m: NetMsg) { try { this.conns.get(cid)?.send(JSON.stringify(m)); } catch { /* */ } }
+  broadcast(m: NetMsg) { const s = JSON.stringify(m); for (const c of this.conns.values()) try { c.send(s); } catch { /* */ } }
   close() { this.peer?.destroy(); }
 }
 export class P2PClient implements ClientTransport {
   peer: any; conn: any;
   onMsg = (_: NetMsg) => {};
   onClose = () => {};
+  private closed = false;
   constructor(private code: string) {}
   async connect() {
     const { Peer } = await import('peerjs');
     return new Promise<void>((res, rej) => {
+      let opened = false;
+      const fail = (e: Error) => { if (!opened) { opened = true; clearTimeout(timer); this.peer?.destroy(); rej(e); } };
+      const timer = setTimeout(() => fail(new Error('Хост не отвечает. Проверьте код комнаты и интернет.')), 15000);
       this.peer = new Peer();
-      this.peer.on('error', (e: any) => rej(new Error('P2P: ' + (e?.type === 'peer-unavailable' ? 'комната не найдена' : e?.type ?? e))));
+      keepAlive(this.peer);
+      this.peer.on('error', (e: any) => { if (!opened) fail(p2pError(e)); else if (e?.type === 'peer-unavailable') this.lost(); });
       this.peer.on('open', () => {
+        if (this.conn) return; // переподключение к сигнальному серверу — канал к хосту уже есть
         this.conn = this.peer.connect(PEER_PREFIX + this.code, { reliable: true });
-        this.conn.on('open', () => res());
+        this.conn.on('open', () => { opened = true; clearTimeout(timer); res(); });
         this.conn.on('data', (d: any) => this.onMsg(typeof d === 'string' ? JSON.parse(d) : d));
-        this.conn.on('close', () => this.onClose());
+        this.conn.on('close', () => this.lost());
+        this.conn.on('error', () => this.lost());
       });
     });
   }
-  send(m: NetMsg) { this.conn?.send(JSON.stringify(m)); }
-  close() { this.peer?.destroy(); }
+  private lost() { if (!this.closed) { this.closed = true; this.onClose(); } }
+  send(m: NetMsg) { try { this.conn?.send(JSON.stringify(m)); } catch { /* */ } }
+  close() { this.closed = true; this.peer?.destroy(); }
 }
 
 export const roomCode = () => Array.from({ length: 5 }, () => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.floor(Math.random() * 32)]).join('');

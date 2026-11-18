@@ -11,7 +11,7 @@ export function LobbyScreen() {
   const hasSeat = lobby.seats.some(mine);
   const ownerLabel = (x: LobbySeat) => {
     if (x.owner === 'host') return host ? (x.id === 'host' ? 'вы · хост' : 'на этом устройстве') : 'хост';
-    if (!x.owner) return 'свободно';
+    if (!x.owner) return x.token && !lobby.resume ? 'отключился' : 'свободно';
     if (x.owner === net.me) return 'вы';
     return 'друг';
   };

@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { hasLanServer, saves, useStore } from '../store';
+import { hasLanServer, lastRoom, roomCodes, saves, useStore } from '../store';
 
 export function Menu() {
-  const { setScreen, loadState, toast, openLobby, leave } = useStore();
+  const { setScreen, loadState, toast, openLobby, leave, join, net } = useStore();
+  const room = lastRoom();
   const [lan, setLan] = useState(false);
   useEffect(() => { hasLanServer().then(setLan); }, []);
   const [list, setList] = useState(saves.list());
@@ -11,7 +12,8 @@ export function Menu() {
     const s = saves.get(id);
     if (!s) return toast('Сохранение повреждено', 'bad');
     leave();
-    if (asHost) { await openLobby(lan ? 'ws' : 'p2p', null, s); return; } // друзья займут свои фишки в лобби
+    // тем же способом связи и с тем же кодом, что и раньше — друзья переподключатся сами
+    if (asHost) { const prev = roomCodes.get(s.id); await openLobby(prev?.kind ?? (lan ? 'ws' : 'p2p'), null, s); return; }
     loadState(s);
   };
   return (
@@ -23,12 +25,16 @@ export function Menu() {
           {last && <button className="btn gold big" onClick={() => open(last.id)}>Продолжить «{last.title}»</button>}
           <button className={`btn big ${last ? '' : 'gold'}`} onClick={() => setScreen('setup')}>Новая партия</button>
           <button className="btn big" onClick={() => setScreen('join')}>Присоединиться к другу</button>
+          {room && <button className="btn" disabled={net.status === 'connecting'} onClick={() => { setScreen('join'); join(room.code, room.kind, room.server, room.name); }}>↻ Вернуться в комнату {room.code}</button>}
         </div>
         <div className="menu-links">
           <button className="menu-link" onClick={() => setScreen('rules')}><span>📖</span>Правила и словарь</button>
           <button className="menu-link" onClick={() => setScreen('editor')}><span>🗂️</span>Справочники</button>
         </div>
       </div>
+      {net.mode === 'host' && net.status === 'connecting' && (
+        <div className="reconnect-back"><div className="reconnect glass"><span className="spinner" /><h3>Открываем комнату {net.code}</h3><p className="muted">{net.error ?? 'Подключаемся к серверу соединения…'}</p><button className="btn ghost" onClick={() => leave()}>Отмена</button></div></div>
+      )}
       <aside className="menu-right glass">
         <div className="saves-head">
           <h2>Мои партии</h2>

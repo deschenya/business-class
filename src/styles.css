@@ -391,3 +391,10 @@ textarea.json { width: 100%; height: 60vh; font-family: monospace; font-size: 12
 .loader-text { width: 100%; display: flex; justify-content: space-between; color: var(--ink); font-weight: 600; }
 .loader-text b { color: var(--gold2); font-variant-numeric: tabular-nums; }
 .loader-logo.placeholder { height: 160px; display: grid; place-items: center; font-family: 'Playfair Display', serif; font-size: 44px; color: var(--gold2); animation: none; }
+
+/* ------------------------------------------------ переподключение */
+.reconnect-back { position: fixed; inset: 0; z-index: 30; display: grid; place-items: center; background: rgba(0,0,0,.55); backdrop-filter: blur(3px); animation: fadeIn .3s; }
+.reconnect { width: min(440px, 92vw); padding: 24px; display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; background: rgba(22,15,10,.95); }
+.reconnect h3 { margin: 0; }
+.reconnect p { margin: 0; line-height: 1.5; }
+.reconnect-ico { font-size: 34px; }

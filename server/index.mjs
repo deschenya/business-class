@@ -53,9 +53,10 @@ wss.on('connection', (ws, req) => {
       else if (m.t === '_all') { const s = JSON.stringify(m.msg); for (const c of r.clients.values()) c.send(s); }
     });
     ws.on('close', () => {
-      console.log(`[${room}] хост отключился — закрываем комнату`);
+      console.log(`[${room}] хост отключился`);
       if (r.host !== ws) return;
-      for (const c of r.clients.values()) { try { c.send(JSON.stringify({ t: 'bye' })); } catch {} c.close(); }
+      // без «bye»: клиенты попробуют переподключиться — хост мог просто перезагрузить страницу
+      for (const c of r.clients.values()) c.close();
       rooms.delete(room);
     });
     return;

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Loader } from './Loader';
-import { useStore } from '../store';
+import { lastRoom, useStore } from '../store';
 import { Menu } from './Menu';
 import { SetupScreen } from './Setup';
 import { GameScreen } from './Game';
@@ -9,15 +9,22 @@ import { EditorScreen } from './Editor';
 import { JoinScreen } from './Join';
 import { LobbyScreen } from './Lobby';
 import { Toasts } from './Toasts';
+import { ReconnectOverlay } from './Reconnect';
 
 export function App() {
   const { screen, data, loadData } = useStore();
   const [ready, setReady] = useState(false);
   useEffect(() => { if (ready) loadData(); }, [ready, loadData]);
   useEffect(() => {
+    if (!ready) return;
     const q = new URLSearchParams(location.search);
-    if (q.get('join')) useStore.getState().setScreen('join');
-  }, []);
+    const code = q.get('join');
+    if (!code) return;
+    // ссылка-приглашение: если это та же комната, где мы уже были (перезагрузка/вылет) — возвращаемся сразу
+    const r = lastRoom();
+    if (r && r.code === code.toUpperCase()) { useStore.getState().setScreen('join'); useStore.getState().join(r.code, r.kind, r.server, r.name); }
+    else useStore.getState().setScreen('join');
+  }, [ready]); // eslint-disable-line react-hooks/exhaustive-deps
   if (!ready) return <Loader onReady={() => setReady(true)} />;
   if (!data) return <div className="loading"><div className="spinner" />Загрузка…</div>;
   return (
@@ -29,6 +36,7 @@ export function App() {
       {screen === 'editor' && <EditorScreen />}
       {screen === 'join' && <JoinScreen />}
       {screen === 'lobby' && <LobbyScreen />}
+      <ReconnectOverlay />
       <Toasts />
     </>
   );
