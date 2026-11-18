@@ -6,22 +6,23 @@ import { useStore } from '../store';
 import { STOCK_HEX, cls, fmt, pn } from './helpers';
 
 type Tab = 'log' | 'ledger' | 'market' | 'registry' | 'host';
+const TABS: [Tab, string][] = [['log', 'Журнал'], ['ledger', 'Расчёты'], ['market', 'Котировки'], ['registry', 'Реестр'], ['host', 'Ведущий']];
+
 export function SidePanel({ s }: { s: GameState }) {
-  const [tab, setTab] = useState<Tab>('log');
-  const [collapsed, setCollapsed] = useState(false);
+  // null — панель свёрнута (видны только табы); нажатие на таб разворачивает, повторное — сворачивает
+  const [tab, setTab] = useState<Tab | null>(null);
   const can = useStore((st) => st.can);
   return (
-    <div className={cls('side glass', collapsed && 'collapsed')}>
+    <div className={cls('side glass', !tab && 'collapsed')}>
       <div className="tabs">
-        <button className={tab === 'log' ? 'on' : ''} onClick={() => setTab('log')}>Журнал</button>
-        <button className={tab === 'ledger' ? 'on' : ''} onClick={() => setTab('ledger')}>Расчёты</button>
-        <button className={tab === 'market' ? 'on' : ''} onClick={() => setTab('market')}>Котировки</button>
-        <button className={tab === 'registry' ? 'on' : ''} onClick={() => setTab('registry')}>Реестр</button>
-        {can('host') && <button className={tab === 'host' ? 'on' : ''} onClick={() => setTab('host')}>Ведущий</button>}
-        <button className="icon-btn" onClick={() => setCollapsed(!collapsed)}>{collapsed ? '‹' : '›'}</button>
+        {TABS.filter(([k]) => k !== 'host' || can('host')).map(([k, label]) => (
+          <button key={k} className={tab === k ? 'on' : ''} onClick={() => setTab(tab === k ? null : k)} title={tab === k ? 'Свернуть' : 'Открыть'}>
+            {label}<i className="tab-caret">{tab === k ? '▴' : '▾'}</i>
+          </button>
+        ))}
       </div>
-      {!collapsed && (
-        <div className="tab-body">
+      {tab && (
+        <div className="tab-body" key={tab}>
           {tab === 'log' && <LogTab s={s} />}
           {tab === 'ledger' && <LedgerTab s={s} />}
           {tab === 'market' && <MarketTab s={s} />}

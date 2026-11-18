@@ -152,7 +152,12 @@ code { font-size: 11px; color: #d7c8a8; }
 .prop-row.warn { color: var(--warn); }
 
 .side { position: absolute; top: 58px; right: 12px; width: 380px; bottom: 150px; z-index: 4; display: flex; flex-direction: column; overflow: hidden; }
-.side.collapsed { bottom: auto; width: auto; }
+.side.collapsed { bottom: auto; }
+.side.collapsed .tabs { border-bottom: none; }
+.tab-caret { font-style: normal; font-size: 9px; margin-left: 3px; opacity: .6; }
+.tabs button.on .tab-caret { opacity: 1; }
+.side .tab-body { animation: tabOpen .22s ease-out; }
+@keyframes tabOpen { from { opacity: 0; transform: translateY(-6px); } }
 .tabs { display: flex; gap: 2px; padding: 6px; border-bottom: 1px solid var(--line); }
 .tabs button:not(.icon-btn) { flex: 1; background: none; border: none; color: var(--muted); padding: 6px 4px; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 12px; }
 .tabs button.on { background: rgba(217,180,90,.16); color: var(--gold2); }
