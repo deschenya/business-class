@@ -32,10 +32,10 @@ const UP = new THREE.Vector3(0, 1, 0);
  */
 export const CAM = {
   // бросок кубиков: наезд на лоток, к остановке — почти сверху, чтобы читались грани
-  diceR0: 7.6, diceRMin: 5.4, diceRMax: 8.5, dicePhi0: 0.66, dicePhi1: 0.5, diceTh: 0.32, diceHold: 0.3,
+  diceR0: 9.2, diceRMin: 6.6, diceRMax: 10.2, dicePhi0: 0.66, dicePhi1: 0.5, diceTh: 0.32, diceHold: 0.3,
   diceSpeed: 1.25, // ускорение проигрывания броска
   // проводка фишки
-  moveR: 8.8, moveRSmall: 6.2, movePhi: 0.74, movePhiSmall: 0.6,
+  moveR: 10.6, moveRSmall: 7.4, movePhi: 0.74, movePhiSmall: 0.6,
   moveSwing: 0.62, // насколько камера обходит поле вслед за фишкой (рад при фишке сбоку)
   moveLook: 1.0, // смещение взгляда к финишу хода (ед.)
   moveLead: 1.1, // упреждение к клетке текущего прыжка (ед.)
@@ -315,7 +315,15 @@ export class TableScene {
   }
 
   // ------------------------------------------------------------ синхронизация
+  private lastTurnKey = '';
   syncPlayers(s: GameState) {
+    const turnKey = `${s.turn.n}:${s.turn.player}`;
+    if (this.loaded && turnKey !== this.lastTurnKey) {
+      const first = this.lastTurnKey === '';
+      this.lastTurnKey = turnKey;
+      // ход перешёл к другому игроку — камера к его фишке (только «Следить»)
+      if (!first) { this.userGrab = false; queueMicrotask(() => this.focusPawn(s.turn.player)); }
+    }
     if (!this.loaded) return; // фишки создаём только после загрузки моделей
     const groups = new Map<string, PlayerId[]>();
     for (const p of s.players) { if (p.bankrupt) continue; const k = JSON.stringify(p.pos); groups.set(k, [...(groups.get(k) ?? []), p.id]); }
@@ -564,7 +572,7 @@ export class TableScene {
         }
         this.restPose(pw.obj);
         for (const d of dodged) d.obj.userData.dodging = false; // на финишной клетке — расставит syncPlayers
-        if (shot && this.shot === shot) { shot.release = this.elapsed + CAM.moveHold / speed; shot.landing = final; }
+        // камера остаётся на фишке после хода (режим «Следить») — без отъезда на общий план
         pw.busy = false;
       } else if (e.t === 'teleport') {
         const pw = this.pawns.get(e.player);
@@ -582,7 +590,7 @@ export class TableScene {
           onLand: () => { sfx.tap(); this.puff(to, small ? 0.7 : 1.8, 0.65); this.kick(CAM.shakeTele); },
         });
         this.restPose(pw.obj);
-        if (shot && this.shot === shot) { shot.release = this.elapsed + CAM.moveHold / speed; shot.landing = to; }
+        // после прыжка камера тоже остаётся на фишке
         pw.busy = false;
       } else if (e.t === 'card') {
         sfx.card();
@@ -597,8 +605,25 @@ export class TableScene {
         if (e.to !== 'bank') sfx.coin();
       }
     }
+    // бросок без перемещения (например, на рулетке/бирже) — вернуть фокус на фишку ходящего
+    if (this.cine() && this.shot?.kind === 'dice') this.focusPawn(s.turn.player, true);
     this.syncProps(s);
     this.syncPlayers(s);
+  }
+
+  /** Режим «Следить»: склейка на фишку игрока; камера остаётся на ней, пока что-то не произойдёт. */
+  focusPawn(pid: PlayerId, force = false) {
+    if (!this.follow || (!force && this.userGrab)) return;
+    const pw = this.pawns.get(pid);
+    if (!pw || !pw.obj.visible) return;
+    const pos = pw.obj.position.clone();
+    this.moveShot(pw.obj, pos, Math.abs(pos.x) < 9 && Math.abs(pos.z) < 9 && this.isSmallSpot(pos));
+  }
+  private isSmallSpot(p: THREE.Vector3) {
+    // биржа и рулетка — мелкие клетки, камера ближе
+    const b = this.board;
+    const near = (xy: [number, number], r: number) => { const w = this.px(xy[0], xy[1]); return Math.hypot(w.x - p.x, w.z - p.z) < r; };
+    return b.roulette.sectors.some((x) => near(x.xy, 0.5)) || b.exchange.lanes.some((l) => l.cells.some((c) => near(c, 0.3)));
   }
 
   floatText(at: THREE.Vector3, text: string, color: string) {
@@ -864,7 +889,7 @@ export class TableScene {
         const r = this.diceRun.resolve;
         this.diceRun = null;
         // кубики легли: короткая пауза крупным планом; если хода не последует — уйдём на общий план
-        if (this.shot?.kind === 'dice') this.shot.release = this.elapsed + CAM.diceHold + 0.3;
+        // кубики легли: короткая пауза; дальше камера переключится на фишку
         setTimeout(r, CAM.diceHold * 1000);
       }
     }
