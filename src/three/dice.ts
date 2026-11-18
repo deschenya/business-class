@@ -17,37 +17,46 @@ export interface DiceRun { frames: DiceFrame[]; fix: THREE.Quaternion[]; hits: n
  * доворачивается так, что нужная грань оказывается на месте выпавшей.
  */
 export function simulateDice(values: number[], area: { cx: number; cz: number; w: number; d: number; floorY: number }, size: number, seed = Math.random()): DiceRun {
-  let r = seed * 1e9;
-  const rnd = () => { r = (r * 16807) % 2147483647; return (r % 10000) / 10000; };
-  const world = new CANNON.World({ gravity: new CANNON.Vec3(0, -9.82 * 3.2, 0) });
+  let r = Math.floor(seed * 2147483646) + 1;
+  const rnd = () => { r = (r * 16807) % 2147483647; return (r - 1) / 2147483646; };
+  const world = new CANNON.World({ gravity: new CANNON.Vec3(0, -9.82 * 3, 0) });
   world.allowSleep = true;
   const matDie = new CANNON.Material('die');
   const matFloor = new CANNON.Material('floor');
-  world.addContactMaterial(new CANNON.ContactMaterial(matDie, matFloor, { friction: 0.25, restitution: 0.42 }));
-  world.addContactMaterial(new CANNON.ContactMaterial(matDie, matDie, { friction: 0.1, restitution: 0.5 }));
+  // реальный бросок: заметное трение и невысокая упругость — кубики катятся вперёд и гаснут, а не прыгают как мячики
+  world.addContactMaterial(new CANNON.ContactMaterial(matDie, matFloor, { friction: 0.45, restitution: 0.28 }));
+  world.addContactMaterial(new CANNON.ContactMaterial(matDie, matDie, { friction: 0.25, restitution: 0.3 }));
   const floor = new CANNON.Body({ mass: 0, material: matFloor, shape: new CANNON.Plane() });
   floor.quaternion.setFromEuler(-Math.PI / 2, 0, 0);
   floor.position.set(0, area.floorY, 0);
   world.addBody(floor);
+  // невидимые бортики только по краю поля — далеко от зоны броска, чтобы кубики не отскакивали назад
+  const EDGE = 9.6;
   const wall = (x: number, z: number, ry: number) => {
     const b = new CANNON.Body({ mass: 0, material: matFloor, shape: new CANNON.Plane() });
     b.quaternion.setFromEuler(0, ry, 0);
     b.position.set(x, area.floorY, z);
     world.addBody(b);
   };
-  wall(area.cx - area.w / 2, area.cz, Math.PI / 2);
-  wall(area.cx + area.w / 2, area.cz, -Math.PI / 2);
-  wall(area.cx, area.cz - area.d / 2, 0);
-  wall(area.cx, area.cz + area.d / 2, Math.PI);
+  wall(-EDGE, 0, Math.PI / 2);
+  wall(EDGE, 0, -Math.PI / 2);
+  wall(0, -EDGE, 0);
+  wall(0, EDGE, Math.PI);
 
   const h = size / 2;
+  // бросок из-за правого края зоны к её центру; направление чуть «веером»
+  const dirZ = (rnd() - 0.5) * 0.35;
   const bodies = values.map((_, i) => {
-    const b = new CANNON.Body({ mass: 1, material: matDie, shape: new CANNON.Box(new CANNON.Vec3(h, h, h)), sleepSpeedLimit: 0.12, sleepTimeLimit: 0.25 });
-    b.position.set(area.cx + area.w * 0.42, area.floorY + 2.2 + i * 0.9, area.cz + area.d * (0.25 - 0.5 * i) * 0.6);
+    const b = new CANNON.Body({ mass: 1, material: matDie, shape: new CANNON.Box(new CANNON.Vec3(h, h, h)), sleepSpeedLimit: 0.08, sleepTimeLimit: 0.3 });
+    const spread = (i - (values.length - 1) / 2) * 0.85;
+    b.position.set(area.cx + area.w * 0.62 + rnd() * 0.3, area.floorY + 1.1 + rnd() * 0.35 + i * 0.12, area.cz + spread + (rnd() - 0.5) * 0.3);
     b.quaternion.setFromEuler(rnd() * 6.28, rnd() * 6.28, rnd() * 6.28);
-    b.velocity.set(-9 - rnd() * 5, 1 + rnd() * 2, (rnd() - 0.5) * 6);
-    b.angularVelocity.set((rnd() - 0.5) * 30, (rnd() - 0.5) * 30, (rnd() - 0.5) * 30);
-    b.linearDamping = 0.08; b.angularDamping = 0.12;
+    const speed = 5.2 + rnd() * 1.6;
+    b.velocity.set(-speed, 0.6 + rnd() * 0.8, speed * (dirZ + (rnd() - 0.5) * 0.12));
+    // вращение в основном «вперёд по ходу» (вокруг оси, перпендикулярной движению) + немного случайного
+    const spin = 9 + rnd() * 6;
+    b.angularVelocity.set((rnd() - 0.5) * 6, (rnd() - 0.5) * 6, spin);
+    b.linearDamping = 0.1; b.angularDamping = 0.18;
     world.addBody(b);
     return b;
   });
