@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { hasLanServer, useStore } from '../store';
 import { TutorToggle } from './Tutor';
+import { Shell } from './Shell';
 
 export function JoinScreen() {
   const { join, net, setScreen } = useStore();
@@ -13,11 +14,9 @@ export function JoinScreen() {
   useEffect(() => { hasLanServer().then((ok) => { setLan(ok); if (!ok) setVia('p2p'); }); }, []);
   const go = () => { try { localStorage.setItem('bk.name', name); } catch { /* */ } join(code.trim(), via, via === 'ws' && server ? server : null, name || 'Гость'); };
   return (
-    <div className="menu" style={{ backgroundImage: 'url(art/title_bg.jpg)' }}>
-      <div className="menu-shade" />
-      <div className="menu-inner">
-        <img className="menu-logo small" src="art/logo.webp" alt="" />
-        <div className="glass card join">
+    <Shell>
+      <img className="shell-logo small" src="art/logo.webp" alt="" />
+        <div className="glass card join enter">
           <h2>Присоединиться к партии</h2>
           <label className="field"><span>Ваше имя</span><input value={name} onChange={(e) => setName(e.target.value)} placeholder="Гость" /></label>
           <label className="field"><span>Код комнаты</span><input value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="ABCDE" maxLength={5} /></label>
@@ -29,12 +28,11 @@ export function JoinScreen() {
           {net.status === 'connecting' && <p className="muted">Подключение…</p>}
           {net.status === 'error' && <p className="err">{net.error}</p>}
           <TutorToggle />
-          <div className="row">
-            <button className="btn ghost" onClick={() => setScreen('menu')}>Назад</button>
-            <button className="btn gold" onClick={go} disabled={code.length < 4}>Подключиться</button>
+          <div className="row join-actions">
+            <button className="btn ghost" onClick={() => setScreen('menu')}>← Назад</button>
+            <button className="btn gold shine" onClick={go} disabled={code.length < 4}>Подключиться</button>
           </div>
         </div>
-      </div>
-    </div>
+    </Shell>
   );
 }

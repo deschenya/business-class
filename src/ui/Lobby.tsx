@@ -2,6 +2,7 @@ import { useStore, type LobbySeat } from '../store';
 import { PAWN_PALETTE, PawnIcon, colorName, cls } from './helpers';
 import { InviteBox } from './NetPanel';
 import { TutorToggle } from './Tutor';
+import { Shell } from './Shell';
 
 export function LobbyScreen() {
   const { lobby, net, lobbyEdit, lobbyAddLocal, lobbyRemove, lobbyClaim, lobbySit, lobbyStart, leave, setScreen } = useStore();
@@ -18,9 +19,8 @@ export function LobbyScreen() {
   const free = lobby.seats.filter((x) => !x.owner).length;
   const exit = () => { if (!host || confirm('Закрыть комнату? Все подключившиеся будут отключены.')) { leave(); setScreen('menu'); } };
   return (
-    <div className="menu lobby" style={{ backgroundImage: 'url(art/title_bg.jpg)' }}>
-      <div className="menu-shade" />
-      <div className="lobby-box glass">
+    <Shell wide>
+      <div className="lobby-box glass enter">
         <div className="lobby-head">
           <img src="art/logo.webp" className="lobby-logo" alt="" />
           <div>
@@ -73,7 +73,7 @@ export function LobbyScreen() {
             <>
               {!lobby.resume && lobby.seats.length < 8 && <button className="btn" onClick={lobbyAddLocal}>+ Игрок на этом устройстве</button>}
               <div className="lobby-start">
-                <button className="btn gold big" disabled={lobby.seats.length < 2} onClick={lobbyStart}>Начать игру →</button>
+                <button className="btn gold big shine" disabled={lobby.seats.length < 2} onClick={lobbyStart}>Начать игру →</button>
                 {lobby.seats.length < 2 && <span className="muted small">Нужно минимум 2 игрока</span>}
                 {lobby.resume && free > 0 && <span className="muted small">Свободных фишек: {free}. Их можно будет занять и после старта.</span>}
               </div>
@@ -83,6 +83,6 @@ export function LobbyScreen() {
           )}
         </div>
       </div>
-    </div>
+    </Shell>
   );
 }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { hasLanServer, lastRoom, roomCodes, saves, useStore } from '../store';
+import { Shell, stagger } from './Shell';
 
 export function Menu() {
   const { setScreen, loadState, toast, openLobby, leave, join, net } = useStore();
@@ -15,29 +16,20 @@ export function Menu() {
     if (asHost) { const prev = roomCodes.get(s.id); await openLobby(prev?.kind ?? (lan ? 'ws' : 'p2p'), null, s); return; }
     loadState(s);
   };
+  let k = 0;
   return (
-    <div className="menu" style={{ backgroundImage: 'url(art/title_bg.jpg)' }}>
-      <div className="menu-shade" />
-      <div className="menu-left">
-        <img className="menu-logo" src="art/logo.webp" alt="Бизнес-класс!!!" />
-        <div className="menu-buttons">
-          <button className="btn gold big" onClick={() => setScreen('setup')}>Начать партию</button>
-          <button className="btn big" onClick={() => setScreen('join')}>Присоединиться</button>
-        </div>
-        <div className="menu-links">
-          <button className="menu-link" onClick={() => setScreen('rules')}><span>📖</span>Правила и словарь</button>
-          <button className="menu-link" onClick={() => setScreen('editor')}><span>🗂️</span>Справочники</button>
-        </div>
+    <Shell>
+      <img className="shell-logo" src="art/logo.webp" alt="Бизнес-Класс!!!" />
+      <div className="menu-buttons">
+        <button className="btn gold big shine enter" style={stagger(k++)} onClick={() => setScreen('setup')}>Начать партию</button>
+        <button className="btn big enter" style={stagger(k++)} onClick={() => setScreen('join')}>Присоединиться</button>
       </div>
-      {net.mode === 'host' && net.status === 'connecting' && (
-        <div className="reconnect-back"><div className="reconnect glass"><span className="spinner" /><h3>Открываем комнату {net.code}</h3><p className="muted">{net.error ?? 'Подключаемся к серверу соединения…'}</p><button className="btn ghost" onClick={() => leave()}>Отмена</button></div></div>
-      )}
       {(list.length > 0 || room) && (
-        <aside className="menu-right glass">
+        <section className="saves glass enter" style={stagger(k++)}>
           <h2>Мои партии</h2>
           <div className="saves-list">
             {room && (
-              <div className="save-row room" onClick={() => { if (net.status !== 'connecting') { setScreen('join'); join(room.code, room.kind, room.server, room.name); } }}>
+              <div className="save-row room enter" style={stagger(k++)} onClick={() => { if (net.status !== 'connecting') { setScreen('join'); join(room.code, room.kind, room.server, room.name); } }}>
                 <div className="save-main">
                   <b>Сетевая партия · комната {room.code}</b>
                   <span className="muted small">вы играли как «{room.name}» — вернуться за свою фишку</span>
@@ -46,11 +38,10 @@ export function Menu() {
               </div>
             )}
             {list.map((m) => (
-              <div key={m.id} className="save-row" onClick={() => open(m.id)}>
+              <div key={m.id} className="save-row enter" style={stagger(k++)} onClick={() => open(m.id)}>
                 <div className="save-main">
                   <b>{m.title}</b>
-                  <span className="muted small">{m.players.join(', ')}</span>
-                  <span className="muted small">ход {m.turn} · {new Date(m.updatedAt).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
+                  <span className="muted small">{m.players.join(', ')} · ход {m.turn} · {new Date(m.updatedAt).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
                 </div>
                 <div className="save-actions">
                   <span className="save-go" title="Продолжить на этом устройстве">▶ Играть</span>
@@ -60,8 +51,15 @@ export function Menu() {
               </div>
             ))}
           </div>
-        </aside>
+        </section>
       )}
-    </div>
+      <div className="menu-links enter" style={stagger(k++)}>
+        <button className="menu-link" onClick={() => setScreen('rules')}><span>📖</span>Правила и словарь</button>
+        <button className="menu-link" onClick={() => setScreen('editor')}><span>🗂️</span>Справочники</button>
+      </div>
+      {net.mode === 'host' && net.status === 'connecting' && (
+        <div className="reconnect-back"><div className="reconnect glass"><span className="spinner" /><h3>Открываем комнату {net.code}</h3><p className="muted">{net.error ?? 'Подключаемся к серверу соединения…'}</p><button className="btn ghost" onClick={() => leave()}>Отмена</button></div></div>
+      )}
+    </Shell>
   );
 }
