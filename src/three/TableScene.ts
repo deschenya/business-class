@@ -32,7 +32,8 @@ const UP = new THREE.Vector3(0, 1, 0);
  */
 export const CAM = {
   // бросок кубиков: наезд на лоток, к остановке — почти сверху, чтобы читались грани
-  diceR0: 9, diceRMin: 5.4, diceRMax: 8.5, dicePhi0: 0.74, dicePhi1: 0.5, diceTh: 0.32, diceHold: 0.5,
+  diceR0: 7.6, diceRMin: 5.4, diceRMax: 8.5, dicePhi0: 0.66, dicePhi1: 0.5, diceTh: 0.32, diceHold: 0.3,
+  diceSpeed: 1.25, // ускорение проигрывания броска
   // проводка фишки
   moveR: 8.8, moveRSmall: 6.2, movePhi: 0.74, movePhiSmall: 0.6,
   moveSwing: 0.62, // насколько камера обходит поле вслед за фишкой (рад при фишке сбоку)
@@ -426,6 +427,28 @@ export class TableScene {
    * приземление со сплющиванием; при settle > 0 — пружинка до полного покоя.
    * Без settle фишка остаётся чуть сплющенной: следующий прыжок продолжает из этого состояния.
    */
+  /** Чужие фишки на клетке, куда прыгает ходящая, отскакивают в сторону от её пути. */
+  private dodge(mover: PlayerId, from: THREE.Vector3, to: THREE.Vector3, small: boolean, dur: number) {
+    const out: { obj: THREE.Group; home: THREE.Vector3 }[] = [];
+    const dx = to.x - from.x, dz = to.z - from.z;
+    const len = Math.hypot(dx, dz) || 1;
+    const sx = -dz / len, sz = dx / len; // перпендикуляр к пути
+    const near = small ? 0.3 : 0.75;
+    for (const [id, other] of this.pawns) {
+      if (id === mover || !other.obj.visible || other.busy || other.obj.userData.dodging) continue;
+      const o = other.obj.position;
+      if (Math.hypot(o.x - to.x, o.z - to.z) > near) continue;
+      // в ту сторону, где фишка уже стоит относительно центра клетки
+      const sign = (o.x - to.x) * sx + (o.z - to.z) * sz >= 0 ? 1 : -1;
+      const push = small ? 0.28 : 0.72;
+      const home = o.clone();
+      const dest = new THREE.Vector3(o.x + sx * sign * push + dx / len * 0.1, o.y, o.z + sz * sign * push + dz / len * 0.1);
+      other.obj.userData.dodging = true;
+      this.hop(other.obj, dest, { dur: dur * 0.85, height: small ? 0.18 : 0.42, squash: 0.1, lean: 0.14, wobble: 0.12 * sign, yaw: 0.6 * sign });
+      out.push({ obj: other.obj, home });
+    }
+    return out;
+  }
   private hop(obj: THREE.Object3D, to: THREE.Vector3, o: HopOpts) {
     const from = obj.position.clone();
     obj.userData.hopTo = to; // для упреждения камеры
@@ -510,6 +533,7 @@ export class TableScene {
         const n = e.path.length - 1;
         const final = this.worldOf(e.path[n]);
         const shot = this.cine() ? this.moveShot(pw.obj, final, e.path[n].z === 'x' || e.path[n].z === 'r') : null;
+        let dodged: { obj: THREE.Group; home: THREE.Vector3 }[] = [];
         for (let i = 1; i <= n; i++) {
           const pos = e.path[i];
           const small = pos.z === 'x' || pos.z === 'r';
@@ -519,6 +543,10 @@ export class TableScene {
           let height = (small ? HOP.heightSmall : HOP.height) * (1 + (Math.random() * 2 - 1) * HOP.jitter);
           if (last) { dur *= HOP.lastDur; height = (small ? HOP.heightSmall : HOP.height) * HOP.lastHeight; }
           const to = this.worldOf(pos);
+          // фишки на клетке приземления отпрыгивают вбок; те, что остались позади, возвращаются на место
+          const back = dodged;
+          dodged = this.dodge(e.player, pw.obj.position, to, small, dur / speed);
+          for (const b of back) this.hop(b.obj, b.home, { dur: (dur * 1.1) / speed, height: small ? 0.12 : 0.3, squash: 0.08, lean: 0.06, onLand: () => { b.obj.userData.dodging = false; } });
           await this.hop(pw.obj, to, {
             dur: dur / speed, height,
             antic: first ? HOP.antic / speed : 0,
@@ -535,6 +563,7 @@ export class TableScene {
           });
         }
         this.restPose(pw.obj);
+        for (const d of dodged) d.obj.userData.dodging = false; // на финишной клетке — расставит syncPlayers
         if (shot && this.shot === shot) { shot.release = this.elapsed + CAM.moveHold / speed; shot.landing = final; }
         pw.busy = false;
       } else if (e.t === 'teleport') {
@@ -608,7 +637,17 @@ export class TableScene {
     this.home.r = this.sph.radius; this.home.phi = this.sph.phi; this.home.th = this.sph.theta;
     this.homeDirty = false;
   }
-  private direct(s: Shot) {
+  /** cut = мгновенная склейка (без пролёта): камера сразу встаёт в кадр, дальше — плавное слежение */
+  private direct(s: Shot, cut = false) {
+    if (cut) {
+      if (this.homeDirty) this.captureHome();
+      this.rig.f.copy(s.f); this.rig.r = s.r; this.rig.phi = s.phi; this.rig.th = s.th;
+      this.vel.fill(0);
+      this.camera.position.setFromSpherical(this.sph.set(s.r, s.phi, s.th)).add(s.f);
+      this.controls.target.copy(s.f);
+      this.shot = s;
+      return s;
+    }
     if (!this.shot) {
       if (this.homeDirty) this.captureHome();
       this.sph.setFromVector3(this.v1.copy(this.camera.position).sub(this.controls.target));
@@ -638,7 +677,7 @@ export class TableScene {
     const th = this.home.th + CAM.diceTh;
     this.direct({
       kind: 'dice', auto: true, f: end.clone(), r: CAM.diceR0, phi: CAM.dicePhi0, th,
-      sf: 0.28, sr: 0.5, sth: 0.7, landing: end,
+      sf: 0.14, sr: 0.3, sth: 0.4, landing: end,
       track: (s) => {
         const dr = this.diceRun;
         if (!dr || dr.run !== run) return;
@@ -650,7 +689,7 @@ export class TableScene {
         s.r = lerp(CAM.diceR0, rEnd, k);
         s.phi = lerp(CAM.dicePhi0, CAM.dicePhi1, k);
       },
-    });
+    }, true);
   }
   private moveShot(obj: THREE.Object3D, final: THREE.Vector3, small: boolean) {
     const f = obj.position.clone(); f.y = TOP;
@@ -672,7 +711,7 @@ export class TableScene {
         s.f.y = TOP;
         s.th = this.thFor(s.f);
       },
-    });
+    }, true);
   }
   private teleShot(obj: THREE.Object3D, to: THREE.Vector3, small: boolean) {
     const from = obj.position.clone();
@@ -690,7 +729,7 @@ export class TableScene {
         s.f.set((p.x + to.x) / 2, TOP + Math.max(0, p.y - TOP) * 0.35, (p.z + to.z) / 2);
         s.r = lerp(rEnd, rBig, smooth(rem));
       },
-    });
+    }, true);
   }
   /** общий план после действия: ближе к пользовательскому ракурсу, со сдвигом к месту события */
   private overview(at?: THREE.Vector3) {
@@ -820,12 +859,12 @@ export class TableScene {
       const fr = run.frames[f];
       for (let i = 0; i < this.dice.length; i++) if (fr.p[i]) { this.dice[i].position.copy(fr.p[i]); this.dice[i].quaternion.copy(fr.q[i]); }
       if (run.hits.includes(f) && Math.floor(this.diceRun.f - dt * 60) < f) { sfx.clack(); if (f === run.hits[0]) this.kick(0.035); }
-      this.diceRun.f += dt * 60;
+      this.diceRun.f += dt * 60 * CAM.diceSpeed;
       if (this.diceRun.f >= run.frames.length) {
         const r = this.diceRun.resolve;
         this.diceRun = null;
         // кубики легли: короткая пауза крупным планом; если хода не последует — уйдём на общий план
-        if (this.shot?.kind === 'dice') this.shot.release = this.elapsed + CAM.diceHold + 0.5;
+        if (this.shot?.kind === 'dice') this.shot.release = this.elapsed + CAM.diceHold + 0.3;
         setTimeout(r, CAM.diceHold * 1000);
       }
     }
