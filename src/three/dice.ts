@@ -16,7 +16,8 @@ export interface DiceRun { frames: DiceFrame[]; fix: THREE.Quaternion[]; hits: n
  * Чтобы выпало значение, определённое ядром игры, модель кубика внутри тела
  * доворачивается так, что нужная грань оказывается на месте выпавшей.
  */
-export function simulateDice(values: number[], area: { cx: number; cz: number; w: number; d: number; floorY: number }, size: number, seed = Math.random()): DiceRun {
+/** throw: откуда и в каком направлении бросать (по умолчанию — справа налево через зону area). */
+export function simulateDice(values: number[], area: { cx: number; cz: number; w: number; d: number; floorY: number }, size: number, seed = Math.random(), throwFrom?: { x: number; z: number; dx: number; dz: number }): DiceRun {
   let r = Math.floor(seed * 2147483646) + 1;
   const rnd = () => { r = (r * 16807) % 2147483647; return (r - 1) / 2147483646; };
   const world = new CANNON.World({ gravity: new CANNON.Vec3(0, -9.82 * 3, 0) });
@@ -46,16 +47,25 @@ export function simulateDice(values: number[], area: { cx: number; cz: number; w
   const h = size / 2;
   // бросок из-за правого края зоны к её центру; направление чуть «веером»
   const dirZ = (rnd() - 0.5) * 0.35;
+  // направление броска (единичный вектор в плоскости поля) и перпендикуляр к нему
+  let tx = -1, tz = dirZ;
+  if (throwFrom) { const a = Math.atan2(throwFrom.dz, throwFrom.dx) + (rnd() - 0.5) * 0.35; tx = Math.cos(a); tz = Math.sin(a); }
+  const tl = Math.hypot(tx, tz); tx /= tl; tz /= tl;
+  const px = -tz, pz = tx;
   const bodies = values.map((_, i) => {
     const b = new CANNON.Body({ mass: 1, material: matDie, shape: new CANNON.Box(new CANNON.Vec3(h, h, h)), sleepSpeedLimit: 0.08, sleepTimeLimit: 0.3 });
     const spread = (i - (values.length - 1) / 2) * 0.85;
-    b.position.set(area.cx + area.w * 0.62 + rnd() * 0.3, area.floorY + 1.1 + rnd() * 0.35 + i * 0.12, area.cz + spread + (rnd() - 0.5) * 0.3);
+    const j = (rnd() - 0.5) * 0.3;
+    if (throwFrom) b.position.set(throwFrom.x + px * spread + tx * j, area.floorY + 1.1 + rnd() * 0.35 + i * 0.12, throwFrom.z + pz * spread + tz * j);
+    else b.position.set(area.cx + area.w * 0.62 + rnd() * 0.3, area.floorY + 1.1 + rnd() * 0.35 + i * 0.12, area.cz + spread + (rnd() - 0.5) * 0.3);
     b.quaternion.setFromEuler(rnd() * 6.28, rnd() * 6.28, rnd() * 6.28);
-    const speed = 5.2 + rnd() * 1.6;
-    b.velocity.set(-speed, 0.6 + rnd() * 0.8, speed * (dirZ + (rnd() - 0.5) * 0.12));
+    const speed = throwFrom ? 4.2 + rnd() * 1.1 : 5.2 + rnd() * 1.6; // от фишки — короче, чтобы легли рядом с ней
+    const wob = (rnd() - 0.5) * 0.12;
+    b.velocity.set(speed * (tx + px * wob), 0.6 + rnd() * 0.8, speed * (tz + pz * wob));
     // вращение в основном «вперёд по ходу» (вокруг оси, перпендикулярной движению) + немного случайного
     const spin = 9 + rnd() * 6;
-    b.angularVelocity.set((rnd() - 0.5) * 6, (rnd() - 0.5) * 6, spin);
+    // ω = up × v: кубик кувыркается вперёд по направлению броска
+    b.angularVelocity.set(tz * spin + (rnd() - 0.5) * 6, (rnd() - 0.5) * 6, -tx * spin + (rnd() - 0.5) * 6);
     b.linearDamping = 0.1; b.angularDamping = 0.18;
     world.addBody(b);
     return b;

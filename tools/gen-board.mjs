@@ -96,7 +96,7 @@ const exchange = {
   lanes: lanes.map(([color, yd]) => ({ color, cells: Array.from({ length: 20 }, (_, i) => [Math.round(351 + i * 41.95), Math.round(yd * D)]) })),
   start: [305, 516], specialCells: [5, 10, 15, 20], length: 20, exits: [11, 21, 50],
 };
-const cx = 1455 * D, cy = 385 * D, R = 120 * D;
+const cx = 1543, cy = 491, R = 107; // ось колеса и радиус кольца сумм (сверено по 4K-карте)
 const sectorDefs = [
   { slot: 0, label: 'В БАНК', type: 'to_bank', value: null, требует_оцифровки: 'значение сектора «В БАНК» на поле не указано' },
   { slot: 1, label: '−30 000', value: -30000 },
@@ -115,7 +115,7 @@ const roulette = {
   center: [Math.round(cx), Math.round(cy)], startSlot: 3, direction: 'ccw', lapsToLeave: 2, exitTo: [52, 24],
   // ccw-порядок обхода (по полю): от «−25 000» против часовой стрелки
   order: [3, 2, 1, 0, 11, 10, 9, 8, 7, 6, 5, 4],
-  sectors: sectorDefs.map((s) => { const ang = ((30 * s.slot - 195 + 180) * Math.PI) / 180; return { ...s, xy: [Math.round(cx + R * Math.sin(ang)), Math.round(cy - R * Math.cos(ang))] }; }),
+  sectors: sectorDefs.map((s) => { const ang = ((((15 + 30 * (s.slot - 7)) % 360) + 360) % 360) * Math.PI / 180; return { ...s, xy: [Math.round(cx + R * Math.sin(ang)), Math.round(cy - R * Math.cos(ang))] }; }),
 };
 const board = {
   _описание: 'Справочник поля «Бизнес-класс!!!», оцифрован по Map2K.jpg (2048×2048). Координаты xy — пиксели изображения поля. Поля «проверить» и «требует_оцифровки» показывают сомнительные/неизвестные значения.',

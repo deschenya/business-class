@@ -555,7 +555,7 @@ export class TableScene {
     this.userGrab = false;
     for (const e of events) {
       if (this.disposed) return;
-      if (e.t === 'dice') await this.rollDice(e.values);
+      if (e.t === 'dice') await this.rollDice(e.values, e.player);
       else if (e.t === 'move') {
         const pw = this.pawns.get(e.player);
         if (!pw) continue;
@@ -660,10 +660,20 @@ export class TableScene {
     this.tweens.push({ t: 0, dur: 1.6, fn: (k) => { o.position.y = y0 + k * 1.2; el.style.opacity = String(1 - Math.max(0, k - 0.6) / 0.4); }, done: () => { this.scene.remove(o); el.remove(); } });
   }
 
-  rollDice(values: number[]) {
+  rollDice(values: number[], player?: PlayerId) {
     const area = { cx: 0.6, cz: 2.1, w: 6.5, d: 5, floorY: TOP };
+    // бросок рядом с фишкой игрока: чуть впереди неё, в сторону центра поля (не налетая на фишку и не за край)
+    let from: { x: number; z: number; dx: number; dz: number } | undefined;
+    const pw = player ? this.pawns.get(player) : undefined;
+    if (pw && pw.obj.visible) {
+      const p = pw.obj.position;
+      let dx = -p.x, dz = -p.z;
+      const len = Math.hypot(dx, dz);
+      if (len < 0.5) { dx = -1; dz = 0; } else { dx /= len; dz /= len; }
+      from = { x: clamp(p.x + dx * 1.3, -8.4, 8.4), z: clamp(p.z + dz * 1.3, -8.4, 8.4), dx, dz };
+    }
     const size = 0.62;
-    const run = simulateDice(values, area, size);
+    const run = simulateDice(values, area, size, Math.random(), from);
     this.dice.forEach((d, i) => { d.visible = i < values.length; if (i < values.length) (d.children[0] as THREE.Object3D).quaternion.copy(run.fix[i]); });
     if (this.cine()) this.diceShot(run, values.length);
     sfx.shake();
