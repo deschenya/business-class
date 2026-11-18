@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { hasLanServer, saves, useStore } from '../store';
 
 export function Menu() {
-  const { setScreen, loadState, toast, hostOnline, leave } = useStore();
+  const { setScreen, loadState, toast, openLobby, leave } = useStore();
   const [lan, setLan] = useState(false);
   useEffect(() => { hasLanServer().then(setLan); }, []);
   const [list, setList] = useState(saves.list());
@@ -11,7 +11,7 @@ export function Menu() {
     const s = saves.get(id);
     if (!s) return toast('Сохранение повреждено', 'bad');
     leave();
-    if (asHost) await hostOnline(lan ? 'ws' : 'p2p');
+    if (asHost) { await openLobby(lan ? 'ws' : 'p2p', null, s); return; } // друзья займут свои фишки в лобби
     loadState(s);
   };
   return (
@@ -19,15 +19,14 @@ export function Menu() {
       <div className="menu-shade" />
       <div className="menu-left">
         <img className="menu-logo" src="art/logo.webp" alt="Бизнес-класс!!!" />
-        <p className="menu-sub">Финансово-экономическая настольная игра</p>
         <div className="menu-buttons">
           {last && <button className="btn gold big" onClick={() => open(last.id)}>Продолжить «{last.title}»</button>}
           <button className={`btn big ${last ? '' : 'gold'}`} onClick={() => setScreen('setup')}>Новая партия</button>
           <button className="btn big" onClick={() => setScreen('join')}>Присоединиться к другу</button>
-          <div className="row">
-            <button className="btn" onClick={() => setScreen('rules')}>Правила и словарь</button>
-            <button className="btn" onClick={() => setScreen('editor')}>Справочники</button>
-          </div>
+        </div>
+        <div className="menu-links">
+          <button className="menu-link" onClick={() => setScreen('rules')}><span>📖</span>Правила и словарь</button>
+          <button className="menu-link" onClick={() => setScreen('editor')}><span>🗂️</span>Справочники</button>
         </div>
       </div>
       <aside className="menu-right glass">
