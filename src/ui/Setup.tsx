@@ -7,21 +7,28 @@ import type { SetupPlayer } from '../engine/engine';
 
 const NAMES = ['Анна', 'Борис', 'Вера', 'Глеб', 'Дарья', 'Егор', 'Жанна', 'Захар'];
 
+// настройки новой партии запоминаются на устройстве
+const PREFS = 'bk.setup';
+type Prefs = { mode: 'local' | 'host'; via: 'p2p' | 'ws'; players: SetupPlayer[]; rollOrder: boolean; money: number; quote: number; stocks: number; claim: boolean; roles: Record<RoleId, number | 'host'> };
+const loadPrefs = (): Partial<Prefs> => { try { return JSON.parse(localStorage.getItem(PREFS) || '{}'); } catch { return {}; } };
+
 export function SetupScreen() {
   const { newGame, setScreen, openLobby } = useStore();
   const [hostName, setHostName] = useState(myName());
-  const [players, setPlayers] = useState<SetupPlayer[]>(() => [0, 1, 2].map((i) => ({ name: NAMES[i], color: PAWN_PALETTE[i].hex, avatar: '', lady: i % 2 === 0 })));
-  const [roles, setRoles] = useState<Record<RoleId, number | 'host'>>({ banker: 'host', broker: 'host', chairman: 'host', inspector: 'host' });
-  const [money, setMoney] = useState(350000);
-  const [quote, setQuote] = useState(10000);
-  const [stocks, setStocks] = useState(1);
-  const [claim, setClaim] = useState(true);
-  const [rollOrder, setRollOrder] = useState(true);
+  const saved = useState(loadPrefs)[0];
+  const [players, setPlayers] = useState<SetupPlayer[]>(() => saved.players?.length ? saved.players : [0, 1, 2].map((i) => ({ name: NAMES[i], color: PAWN_PALETTE[i].hex, avatar: '', lady: i % 2 === 0 })));
+  const [roles, setRoles] = useState<Record<RoleId, number | 'host'>>(saved.roles ?? { banker: 'host', broker: 'host', chairman: 'host', inspector: 'host' });
+  const [money, setMoney] = useState(saved.money ?? 350000);
+  const [quote, setQuote] = useState(saved.quote ?? 10000);
+  const [stocks, setStocks] = useState(saved.stocks ?? 1);
+  const [claim, setClaim] = useState(saved.claim ?? true);
+  const [rollOrder, setRollOrder] = useState(saved.rollOrder ?? true);
   const [title, setTitle] = useState(`Партия ${new Date().toLocaleDateString('ru-RU')}`);
-  const [mode, setMode] = useState<'local' | 'host'>('local');
-  const [via, setVia] = useState<'p2p' | 'ws'>('p2p');
+  const [mode, setMode] = useState<'local' | 'host'>(saved.mode ?? 'local');
+  const [via, setVia] = useState<'p2p' | 'ws'>(saved.via ?? 'p2p');
   const [lan, setLan] = useState(false);
   useEffect(() => { hasLanServer().then(setLan); }, []);
+  useEffect(() => { try { localStorage.setItem(PREFS, JSON.stringify({ mode, via, players, rollOrder, money, quote, stocks, claim, roles } satisfies Prefs)); } catch { /* */ } }, [mode, via, players, rollOrder, money, quote, stocks, claim, roles]);
   const upd = (i: number, p: Partial<SetupPlayer>) => setPlayers((l) => l.map((x, j) => (j === i ? { ...x, ...p } : x)));
   const add = () => {
     const i = players.length;
@@ -87,7 +94,6 @@ export function SetupScreen() {
             )}
           </>
         )}
-        <label className="check order-check" title="Каждый бросает по два кубика: кто выбросил больше — ходит раньше"><input type="checkbox" checked={rollOrder} onChange={(e) => setRollOrder(e.target.checked)} /> 🎲 Разыграть очередь хода</label>
         <details className="advanced-mini">
           <summary>Дополнительно: роли ведущих и стартовые ресурсы</summary>
           {(Object.keys(ROLE_RU) as RoleId[]).map((r) => (
@@ -109,6 +115,7 @@ export function SetupScreen() {
       <div className="row join-actions">
         <button className="btn ghost" onClick={() => setScreen('menu')}>← Назад</button>
         <span className="spacer" />
+        <label className="tutor-toggle check" title="Каждый бросает по два кубика: кто выбросит больше — ходит раньше"><input type="checkbox" checked={rollOrder} onChange={(e) => setRollOrder(e.target.checked)} /><span>Разыграть очередь хода</span></label>
         <TutorToggle />
         <button className="btn gold shine" onClick={start} disabled={mode === 'local' && players.length < 2}>{mode === 'host' ? 'Создать комнату →' : 'Начать партию →'}</button>
       </div>

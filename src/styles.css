@@ -120,9 +120,9 @@ code { font-size: 11px; color: #d7c8a8; }
 .canvas-host canvas { display: block; }
 .labels-layer { position: absolute; inset: 0; pointer-events: none; }
 .vignette { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 45%, transparent 55%, rgba(0,0,0,.55) 100%); }
-.pawn-label { display: flex; align-items: center; gap: 4px; padding: 2px 8px 2px 2px; border-radius: 99px; background: rgba(15,10,6,.78); border: 1.5px solid var(--c); font-size: 11px; font-weight: 700; opacity: .0; transform: translateY(4px); transition: .3s; white-space: nowrap; }
+.pawn-label { display: flex; align-items: center; gap: 4px; padding: 2px 8px 2px 2px; border-radius: 99px; background: rgba(15,10,6,.78); border: 1.5px solid var(--c); font-size: 11px; font-weight: 700; opacity: 0; transition: opacity .3s; white-space: nowrap; }
 .pawn-label .pawn-svg { display: block; }
-.pawn-label.active { opacity: 1; transform: none; }
+.pawn-label.active { opacity: 1; }
 .float-text { font-weight: 800; font-size: 18px; text-shadow: 0 2px 6px rgba(0,0,0,.9); font-family: 'Playfair Display', serif; pointer-events: none; }
 
 .topbar { position: absolute; top: 10px; left: 12px; right: 12px; display: flex; align-items: center; gap: 10px; z-index: 5; pointer-events: none; }
@@ -504,3 +504,6 @@ textarea.json { width: 100%; height: 60vh; font-family: monospace; font-size: 12
 .order-place { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; background: rgba(217,180,90,.2); color: var(--gold2); animation: pop .35s; }
 .order-result { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 6px; flex-wrap: wrap; font-weight: 600; animation: fadeUp .3s; }
 .order-skip { align-self: flex-end; }
+.order-panel { position: absolute; top: 58px; left: 50%; transform: translateX(-50%); z-index: 6; width: min(460px, calc(100vw - 680px)); min-width: 320px; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; animation: slideUp .3s; }
+.order-panel .order-row { padding: 6px 8px; }
+.order-panel .order-throw .die-face { width: 22px; height: 22px; padding: 3px; }

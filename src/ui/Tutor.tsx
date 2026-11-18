@@ -10,7 +10,7 @@ const SEEN = 'bk.tutor.seen';
 const read = (k: string, d: string) => { try { return localStorage.getItem(k) ?? d; } catch { return d; } };
 const listeners = new Set<() => void>();
 export const tutor = {
-  get on() { return read(KEY, 'on') === 'on'; },
+  get on() { return read(KEY, 'off') === 'on'; },
   set(on: boolean) { try { localStorage.setItem(KEY, on ? 'on' : 'off'); if (on) localStorage.removeItem(SEEN); } catch { /* */ } listeners.forEach((f) => f()); },
   seen(): string[] { try { return JSON.parse(read(SEEN, '[]')); } catch { return []; } },
   markSeen(id: string) { try { localStorage.setItem(SEEN, JSON.stringify([...new Set([...tutor.seen(), id])])); } catch { /* */ } listeners.forEach((f) => f()); },
@@ -25,7 +25,7 @@ export function TutorToggle({ label = 'Обучение' }: { label?: string }) 
   return (
     <label className="tutor-toggle check" title="Подсказки по правилам во время хода (на этом устройстве)">
       <input type="checkbox" checked={on} onChange={(e) => tutor.set(e.target.checked)} />
-      <span>🎓 {label}</span>
+      <span>{label}</span>
     </label>
   );
 }
@@ -34,6 +34,7 @@ export function TutorToggle({ label = 'Обучение' }: { label?: string }) 
 interface Tip { id: string; title: string; text: string; inPrompt: boolean }
 const T: Record<string, { title: string; text: string }> = {
   welcome: { title: 'Добро пожаловать за стол!', text: 'Цель — разбогатеть больше других; банкрот выбывает, конец партии игроки выбирают сами. Слева — игроки: деньги и акции (сколько штук и котировка каждого цвета). Справа — журнал, расчёты, котировки и реестр собственности. Наведите на клетку поля — увидите цену и аренду.' },
+  order: { title: 'Розыгрыш очерёдности', text: 'Перед партией каждый бросает два кубика: кто выбросит больше, тот ходит раньше. При равенстве равные перебрасывают. Нажмите «Бросить на очерёдность».' },
   pre: { title: 'Ваш ход', text: 'До броска можно купить или продать акции, взять кредит под залог, выставить имущество на торги или предложить сделку — кнопки рядом с броском. Когда будете готовы — «Бросить кубики». За каждое прохождение «Старта» банк платит $20 000.' },
   route: { title: 'Развилка', text: 'Путей несколько: с внешнего периметра («Бизнес за рубежом») можно въехать в Россию через таможню 31→40 (пошлина $10 000), а с таможни 40/41 — выехать на «Старт» ($15 000 + $5 000 за каждую вашу недвижимость в России). Выберите маршрут.' },
   six: { title: 'Дубль 6 : 6', text: 'Можно сыграть на бирже, а потом вернуться на исходную клетку — или просто пройти 12 клеток.' },
@@ -75,6 +76,7 @@ function pickTip(s: GameState, can: (id: string) => boolean, seen: string[], bus
     if (can(target) || (target === 'host' && can('host'))) { const k = PROMPT_TIP[q.ctx.type]; if (k) { want.push(k); promptTip = k; } }
   } else if (mineNow) {
     const r = awaitingRoll(s);
+    if (r === 'order') want.push('order');
     if (r === 'main') want.push('pre');
     if (r === 'exchange') want.push('exRoll');
     if (r === 'roulette') want.push('rlRoll');
@@ -87,7 +89,7 @@ function pickTip(s: GameState, can: (id: string) => boolean, seen: string[], bus
 function TipBody({ tip }: { tip: Tip }) {
   return (
     <>
-      <div className="tutor-head"><span className="tutor-ico">🎓</span><b>{tip.title}</b></div>
+      <div className="tutor-head"><b>{tip.title}</b></div>
       <p>{tip.text}</p>
       <div className="row">
         <button className="btn sm gold" onClick={() => tutor.markSeen(tip.id)}>Понятно</button>

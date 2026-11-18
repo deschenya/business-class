@@ -27,7 +27,7 @@ export function TopBar() {
       {net.mode !== 'local' && <button className={`btn sm ${net.status === 'online' ? 'online' : ''}`} onClick={() => setNetOpen(!netOpen)}>
         {net.mode === 'host' ? `Хост ${net.code ?? ''} · ${net.peers.length}` : `Клиент ${net.code ?? ''}`}
       </button>}
-      <button className={`btn sm ${tutorOn ? 'on-gold' : ''}`} title="Обучение: подсказки по правилам во время хода" onClick={() => tutor.set(!tutorOn)}>🎓 Обучение</button>
+      <button className={`btn sm ${tutorOn ? 'on-gold' : ''}`} title="Обучение: подсказки по правилам во время хода" onClick={() => tutor.set(!tutorOn)}>Обучение</button>
       <button className="btn sm" onClick={() => setScreen('rules')}>Правила</button>
       <button className="icon-btn" onClick={() => setSound(sfx.toggle())} title="Звук">{sound ? '🔊' : '🔇'}</button>
       {netOpen && net.mode !== 'local' && <NetPanel onClose={() => setNetOpen(false)} />}
