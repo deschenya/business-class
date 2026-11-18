@@ -71,7 +71,8 @@ async function run(name, job) {
       for (const u of urls) {
         const buf = Buffer.from(await (await fetch(u)).arrayBuffer());
         const file = urls.length > 1 ? `${name}_${++k}.${ext}` : `${name}.${ext}`;
-        await fs.writeFile(path.join(OUT, file), buf);
+        // PNG-исходники (лого, рубашка) не публикуются — из них tools/prepare-assets.mjs делает webp
+        await fs.writeFile(path.join(ext === 'png' ? path.resolve('art-src') : OUT, file), buf);
         console.log(`[${name}] saved ${file} (${(buf.length / 1024) | 0} KB)`);
       }
       return;

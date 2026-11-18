@@ -379,3 +379,15 @@ textarea.json { width: 100%; height: 60vh; font-family: monospace; font-size: 12
 .tutor.inline { position: static; width: auto; margin: 10px 0 4px; padding: 10px 12px; border-radius: 10px; background: rgba(120,190,255,.08); border: 1px solid rgba(120,190,255,.3); box-shadow: none; text-align: left; }
 .fan-title .tutor.inline { max-width: 520px; }
 .prompt, .fan-title, .modal { background: rgba(22, 15, 10, .94); }
+
+/* ------------------------------------------------ экран скачивания */
+.loader { position: fixed; inset: 0; display: grid; place-items: center; background: #0d0907; }
+.loader-bg { position: absolute; inset: 0; background-size: cover; background-position: center; opacity: .35; filter: blur(2px) saturate(.9); animation: fadeIn 1.2s; }
+.loader-box { position: relative; width: min(520px, 90vw); display: flex; flex-direction: column; align-items: center; gap: 18px; text-align: center; }
+.loader-logo { width: min(420px, 80vw); filter: drop-shadow(0 12px 30px rgba(0,0,0,.6)); animation: float 6s ease-in-out infinite; }
+.loader-bar { width: 100%; height: 10px; border-radius: 99px; background: rgba(255,255,255,.08); border: 1px solid var(--line); overflow: hidden; }
+.loader-bar i { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, #c5952f, #f3d98b, #c5952f); background-size: 200% 100%; animation: shimmer 1.6s linear infinite; }
+@keyframes shimmer { to { background-position: -200% 0; } }
+.loader-text { width: 100%; display: flex; justify-content: space-between; color: var(--ink); font-weight: 600; }
+.loader-text b { color: var(--gold2); font-variant-numeric: tabular-nums; }
+.loader-logo.placeholder { height: 160px; display: grid; place-items: center; font-family: 'Playfair Display', serif; font-size: 44px; color: var(--gold2); animation: none; }

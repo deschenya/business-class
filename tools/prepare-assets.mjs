@@ -43,7 +43,8 @@ for (const f of await fs.readdir(path.join(SRC, '00_Правила'))) {
 }
 // сгенерированный арт
 const ART = path.resolve('public/art');
-const artJob = async (f, out, w) => { await sharp(path.join(ART, f)).resize({ width: w, withoutEnlargement: true }).webp({ quality: 88 }).toFile(path.join(ART, out)); };
+const SRC_ART = path.resolve('art-src');
+const artJob = async (f, out, w) => { await sharp(path.join(SRC_ART, f)).resize({ width: w, withoutEnlargement: true }).webp({ quality: 88 }).toFile(path.join(ART, out)); };
 tasks.push(artJob('logo.png', 'logo.webp', 1100));
 tasks.push(artJob('exchange_back.png', 'exchange_back.webp', 640));
 await Promise.all(tasks);
