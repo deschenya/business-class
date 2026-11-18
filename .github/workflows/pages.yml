@@ -1,9 +1,9 @@
-# Публикация игры на GitHub Pages при каждом пуше в main.
+# Публикация игры на GitHub Pages при каждом пуше в master.
 # В настройках репозитория: Settings → Pages → Source: GitHub Actions.
 name: Deploy to GitHub Pages
 on:
   push:
-    branches: [main]
+    branches: [master]
   workflow_dispatch:
 permissions:
   contents: read
