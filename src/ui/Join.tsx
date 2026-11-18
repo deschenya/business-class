@@ -25,9 +25,10 @@ export function JoinScreen() {
           {via === 'ws' && <label className="field"><span>Адрес хоста</span><input value={server} onChange={(e) => setServer(e.target.value)} placeholder={`${location.host} (текущий)`} /></label>}
           {net.status === 'connecting' && <p className="muted">Подключение…</p>}
           {net.status === 'error' && <p className="err">{net.error}</p>}
-          <TutorToggle />
           <div className="row join-actions">
             <button className="btn ghost" onClick={() => setScreen('menu')}>← Назад</button>
+            <span className="spacer" />
+            <TutorToggle />
             <button className="btn gold shine" onClick={go} disabled={code.length < 4}>Подключиться</button>
           </div>
         </div>

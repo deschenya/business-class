@@ -104,9 +104,10 @@ export function SetupScreen() {
           <span className="muted small">Сейчас: {fmt(money)} и по {stocks} акции номиналом {fmt(quote)}</span>
         </details>
       </div>
-      <TutorToggle />
       <div className="row join-actions">
         <button className="btn ghost" onClick={() => setScreen('menu')}>← Назад</button>
+        <span className="spacer" />
+        <TutorToggle />
         <button className="btn gold shine" onClick={start} disabled={mode === 'local' && players.length < 2}>{mode === 'host' ? 'Создать комнату →' : 'Начать партию →'}</button>
       </div>
     </div>

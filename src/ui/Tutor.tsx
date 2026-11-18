@@ -20,10 +20,10 @@ export function useTutorOn() {
   useEffect(() => { const f = () => setOn(tutor.on); listeners.add(f); return () => void listeners.delete(f); }, []);
   return on;
 }
-export function TutorToggle({ label = 'Обучение: подсказки по правилам во время хода' }: { label?: string }) {
+export function TutorToggle({ label = 'Обучение' }: { label?: string }) {
   const on = useTutorOn();
   return (
-    <label className="tutor-toggle check">
+    <label className="tutor-toggle check" title="Подсказки по правилам во время хода (на этом устройстве)">
       <input type="checkbox" checked={on} onChange={(e) => tutor.set(e.target.checked)} />
       <span>🎓 {label}</span>
     </label>

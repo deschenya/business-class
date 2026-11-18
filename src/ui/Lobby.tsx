@@ -63,10 +63,10 @@ export function LobbyScreen() {
           {!host && !lobby.resume && !hasSeat && <button className="btn gold" onClick={lobbySit}>Сесть за стол</button>}
         </div>
 
-        <TutorToggle label="Обучение на этом устройстве: подсказки по правилам во время хода" />
         <div className="lobby-foot">
           <button className="btn ghost" onClick={exit}>{host ? 'Закрыть комнату' : 'Выйти'}</button>
           <div className="spacer" />
+          <TutorToggle />
           {host ? (
             <>
               {!lobby.resume && lobby.seats.length < 8 && <button className="btn" onClick={lobbyAddLocal}>+ Игрок на этом устройстве</button>}

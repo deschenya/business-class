@@ -358,7 +358,7 @@ textarea.json { width: 100%; height: 60vh; font-family: monospace; font-size: 12
 .tutor-head b { font-family: 'Playfair Display', serif; font-size: 16px; color: #cfe6ff; }
 .tutor-ico { font-size: 20px; }
 .tutor p { margin: 4px 0 10px; line-height: 1.5; font-size: 13px; color: #e6dccb; }
-.tutor-toggle { padding: 8px 12px; border-radius: 10px; background: rgba(120,190,255,.08); border: 1px solid rgba(120,190,255,.25); }
+.tutor-toggle { padding: 7px 11px; border-radius: 10px; background: rgba(120,190,255,.08); border: 1px solid rgba(120,190,255,.25); white-space: nowrap; font-size: 13px; font-weight: 600; }
 .btn.on-gold { border-color: rgba(120,190,255,.6); color: #cfe6ff; }
 .turn-banner { position: absolute; top: 34%; left: 50%; transform: translate(-50%, -50%); z-index: 8; display: flex; align-items: center; gap: 14px; padding: 16px 26px; border-radius: 18px; background: rgba(15,10,6,.86); border: 2px solid var(--c); box-shadow: 0 0 60px color-mix(in srgb, var(--c) 35%, transparent), var(--shadow); pointer-events: none; animation: bannerIn 1.9s ease forwards; }
 .turn-banner b { display: block; font-family: 'Playfair Display', serif; font-size: 30px; }
@@ -480,3 +480,4 @@ textarea.json { width: 100%; height: 60vh; font-family: monospace; font-size: 12
 .advanced-mini summary { cursor: pointer; color: var(--muted); font-size: 13px; font-weight: 600; }
 .advanced-mini[open] summary { margin-bottom: 6px; color: var(--gold2); }
 .advanced-mini .field.small { grid-template-columns: 1fr 160px; }
+.join-actions { gap: 10px; }
