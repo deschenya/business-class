@@ -13,7 +13,8 @@ const job = async (src, dst, width, opts = {}) => {
   await p.toFile(dst);
 };
 const tasks = [];
-tasks.push(job('Map2K.jpg', `${DST}/board.jpg`, 2048, { q: 95 }));
+// поле — в полном разрешении исходника (4096): координаты клеток в board.json заданы в системе 2048 и от размера текстуры не зависят
+tasks.push(job('Map2K.jpg', `${DST}/board.jpg`, 4096, { q: 86 }));
 const money = ['1_000', '5_000', '10_000', '50_000', '100_000'];
 for (const m of money) tasks.push(job(`01_Деньги/Деньги_${m}.png`, `${DST}/money/${m.replace('_', '')}.webp`, 640));
 const stocks = { red: 'розовая', yellow: 'оранжевая', green: 'зелёная', blue: 'синяя' };
