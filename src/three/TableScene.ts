@@ -337,8 +337,10 @@ export class TableScene {
 
   // ------------------------------------------------------------ синхронизация
   private lastTurnKey = '';
+  private curPlayer: PlayerId | null = null;
   syncPlayers(s: GameState) {
     const turnKey = `${s.turn.n}:${s.turn.player}`;
+    this.curPlayer = s.turn.player;
     if (this.loaded && turnKey !== this.lastTurnKey) {
       const first = this.lastTurnKey === '';
       this.lastTurnKey = turnKey;
@@ -628,18 +630,18 @@ export class TableScene {
       }
     }
     // бросок без перемещения (например, на рулетке/бирже) — вернуть фокус на фишку ходящего
-    if (this.cine() && this.shot?.kind === 'dice') this.focusPawn(s.turn.player, true);
+    if (this.cine() && this.shot?.kind === 'dice') this.focusPawn(s.turn.player, true, true);
     this.syncProps(s);
     this.syncPlayers(s);
   }
 
   /** Режим «Следить»: склейка на фишку игрока; камера остаётся на ней, пока что-то не произойдёт. */
-  focusPawn(pid: PlayerId, force = false) {
+  focusPawn(pid: PlayerId, force = false, smoothly = false) {
     if (!this.follow || (!force && this.userGrab)) return;
     const pw = this.pawns.get(pid);
     if (!pw || !pw.obj.visible) return;
     const pos = pw.obj.position.clone();
-    this.moveShot(pw.obj, pos, Math.abs(pos.x) < 9 && Math.abs(pos.z) < 9 && this.isSmallSpot(pos));
+    this.moveShot(pw.obj, pos, Math.abs(pos.x) < 9 && Math.abs(pos.z) < 9 && this.isSmallSpot(pos), !smoothly);
   }
   private isSmallSpot(p: THREE.Vector3) {
     // биржа и рулетка — мелкие клетки, камера ближе
@@ -734,7 +736,7 @@ export class TableScene {
     const th = this.home.th + CAM.diceTh;
     this.direct({
       kind: 'dice', auto: true, f: end.clone(), r: CAM.diceR0, phi: CAM.dicePhi0, th,
-      sf: 0.14, sr: 0.3, sth: 0.4, landing: end,
+      sf: 0.3, sr: 0.45, sth: 0.55, landing: end,
       track: (s) => {
         const dr = this.diceRun;
         if (!dr || dr.run !== run) return;
@@ -746,9 +748,10 @@ export class TableScene {
         s.r = lerp(CAM.diceR0, rEnd, k);
         s.phi = lerp(CAM.dicePhi0, CAM.dicePhi1, k);
       },
-    }, true);
+    }); // плавно: кубики падают рядом с фишкой, камера перетекает к ним
   }
-  private moveShot(obj: THREE.Object3D, final: THREE.Vector3, small: boolean) {
+  /** cut — склейка (смена хода); иначе плавный переход (например, от кубиков к фишке). */
+  private moveShot(obj: THREE.Object3D, final: THREE.Vector3, small: boolean, cut = false) {
     const f = obj.position.clone(); f.y = TOP;
     return this.direct({
       kind: 'move', auto: true, f, r: small ? CAM.moveRSmall : CAM.moveR, phi: small ? CAM.movePhiSmall : CAM.movePhi, th: this.thFor(f),
@@ -768,7 +771,7 @@ export class TableScene {
         s.f.y = TOP;
         s.th = this.thFor(s.f);
       },
-    }, true);
+    }, cut);
   }
   private teleShot(obj: THREE.Object3D, to: THREE.Vector3, small: boolean) {
     const from = obj.position.clone();
@@ -833,6 +836,7 @@ export class TableScene {
     const saved = this.previewSaved;
     this.previewSaved = null;
     if (!saved) return;
+    if (this.follow && this.curPlayer) { this.focusPawn(this.curPlayer, true, true); return; }
     this.sph.setFromVector3(this.v1.copy(saved.pos).sub(saved.f));
     this.direct({ kind: 'goal', auto: false, f: saved.f, r: this.sph.radius, phi: this.sph.phi, th: this.sph.theta, sf: 0.12, sr: 0.16, sth: 0.18, until: this.elapsed + 3 });
   }
