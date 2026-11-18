@@ -27,10 +27,10 @@ export function ActionBar({ s, busy }: { s: GameState; busy: boolean }) {
     <>
       <div className="claims">
         {claims.map((c) => (
-          <div key={c.id} className="claim glass">
+          <div key={c.id} className={`claim glass rent ${can(c.owner) ? 'mine' : ''}`}>
             <span className="dot" style={{ background: s.players.find((p) => p.id === c.owner)?.color }} />
             <span><b>{pn(s, c.payer)}</b> на собственности <b>{pn(s, c.owner)}</b> (№{c.cell}) — аренда {fmt(c.amount)}</span>
-            {can(c.owner) && <button className="btn gold sm pulse" onClick={() => dispatch({ type: 'claimRent', by: c.owner, claim: c.id })}>Потребовать</button>}
+            {can(c.owner) && <button className="btn gold claim-btn shine" onClick={() => dispatch({ type: 'claimRent', by: c.owner, claim: c.id })}>💰 Потребовать {fmt(c.amount)}</button>}
           </div>
         ))}
         {debts.map((d) => (
