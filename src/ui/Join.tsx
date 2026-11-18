@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { hasLanServer, useStore } from '../store';
 import { TutorToggle } from './Tutor';
-import { Shell } from './Shell';
 
 export function JoinScreen() {
   const { join, net, setScreen } = useStore();
@@ -14,8 +13,7 @@ export function JoinScreen() {
   useEffect(() => { hasLanServer().then((ok) => { setLan(ok); if (!ok) setVia('p2p'); }); }, []);
   const go = () => { try { localStorage.setItem('bk.name', name); } catch { /* */ } join(code.trim(), via, via === 'ws' && server ? server : null, name || 'Гость'); };
   return (
-    <Shell>
-      <img className="shell-logo small" src="art/logo.webp" alt="" />
+    <>
         <div className="glass card join enter">
           <h2>Присоединиться к партии</h2>
           <label className="field"><span>Ваше имя</span><input value={name} onChange={(e) => setName(e.target.value)} placeholder="Гость" /></label>
@@ -33,6 +31,6 @@ export function JoinScreen() {
             <button className="btn gold shine" onClick={go} disabled={code.length < 4}>Подключиться</button>
           </div>
         </div>
-    </Shell>
+    </>
   );
 }

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { hasLanServer, lastRoom, roomCodes, saves, useStore } from '../store';
-import { Shell, stagger } from './Shell';
+import { stagger } from './Shell';
 
 export function Menu() {
   const { setScreen, loadState, toast, openLobby, leave, join, net } = useStore();
@@ -18,8 +18,7 @@ export function Menu() {
   };
   let k = 0;
   return (
-    <Shell>
-      <img className="shell-logo" src="art/logo.webp" alt="Бизнес-Класс!!!" />
+    <>
       <div className="menu-buttons">
         <button className="btn gold big shine enter" style={stagger(k++)} onClick={() => setScreen('setup')}>Начать партию</button>
         <button className="btn big enter" style={stagger(k++)} onClick={() => setScreen('join')}>Присоединиться</button>
@@ -60,6 +59,6 @@ export function Menu() {
       {net.mode === 'host' && net.status === 'connecting' && (
         <div className="reconnect-back"><div className="reconnect glass"><span className="spinner" /><h3>Открываем комнату {net.code}</h3><p className="muted">{net.error ?? 'Подключаемся к серверу соединения…'}</p><button className="btn ghost" onClick={() => leave()}>Отмена</button></div></div>
       )}
-    </Shell>
+    </>
   );
 }

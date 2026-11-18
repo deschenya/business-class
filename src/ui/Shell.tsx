@@ -7,7 +7,7 @@ const PARTICLES = Array.from({ length: 22 }, (_, i) => ({
   left: (i * 47 + 13) % 100, delay: -((i * 1.3) % 16), dur: 14 + ((i * 7) % 10), size: 2 + (i % 3),
 }));
 
-export function Shell({ children, wide }: { children: ReactNode; wide?: boolean }) {
+export function Shell({ children, wide, logo = 'big' }: { children: ReactNode; wide?: 'wide' | 'mid' | false; logo?: 'big' | 'small' }) {
   return (
     <div className="shell">
       <div className="shell-bg" style={{ backgroundImage: 'url(art/title_bg.jpg)' }} />
@@ -17,7 +17,10 @@ export function Shell({ children, wide }: { children: ReactNode; wide?: boolean 
           <i key={i} className="pt spark" style={{ left: `${p.left}%`, animationDelay: `${p.delay}s`, animationDuration: `${p.dur}s`, width: p.size, height: p.size }} />
         ))}
       </div>
-      <div className={`shell-col ${wide ? 'wide' : ''}`}>{children}</div>
+      <div className={`shell-col ${wide || ''}`}>
+        <img className={`shell-logo ${logo}`} src="art/logo.webp" alt="Бизнес-Класс!!!" />
+        {children}
+      </div>
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Loader } from './Loader';
+import { Shell } from './Shell';
 import { lastRoom, useStore } from '../store';
 import { Menu } from './Menu';
 import { SetupScreen } from './Setup';
@@ -10,6 +11,8 @@ import { JoinScreen } from './Join';
 import { LobbyScreen } from './Lobby';
 import { Toasts } from './Toasts';
 import { ReconnectOverlay } from './Reconnect';
+
+const SHELL = ['menu', 'setup', 'join', 'lobby'];
 
 export function App() {
   const { screen, data, loadData } = useStore();
@@ -29,13 +32,20 @@ export function App() {
   if (!data) return <div className="loading"><div className="spinner" />Загрузка…</div>;
   return (
     <>
-      {screen === 'menu' && <Menu />}
-      {screen === 'setup' && <SetupScreen />}
+      {SHELL.includes(screen) && (
+        // оболочка с фоном и логотипом живёт, пока мы в меню: логотип не перезагружается, а плавно меняет размер
+        <Shell logo={screen === 'menu' ? 'big' : 'small'} wide={screen === 'lobby' ? 'wide' : screen === 'setup' ? 'mid' : false}>
+          <div key={screen} className="shell-screen">
+            {screen === 'menu' && <Menu />}
+            {screen === 'setup' && <SetupScreen />}
+            {screen === 'join' && <JoinScreen />}
+            {screen === 'lobby' && <LobbyScreen />}
+          </div>
+        </Shell>
+      )}
       {screen === 'game' && <GameScreen />}
       {screen === 'rules' && <RulesScreen />}
       {screen === 'editor' && <EditorScreen />}
-      {screen === 'join' && <JoinScreen />}
-      {screen === 'lobby' && <LobbyScreen />}
       <ReconnectOverlay />
       <Toasts />
     </>

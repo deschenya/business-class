@@ -433,10 +433,11 @@ textarea.json { width: 100%; height: 60vh; font-family: monospace; font-size: 12
 .shell-particles .pt { position: absolute; bottom: -40px; opacity: 0; animation: rise linear infinite; }
 .pt.spark { border-radius: 50%; background: radial-gradient(circle, #fff1c2 0%, rgba(255,200,90,.55) 45%, rgba(255,200,90,0) 75%); box-shadow: 0 0 6px rgba(255,205,110,.45); }
 @keyframes rise { 0% { transform: translateY(0) translateX(0); opacity: 0; } 12% { opacity: .7; } 50% { transform: translateY(-56vh) translateX(18px); } 85% { opacity: .35; } 100% { transform: translateY(-112vh) translateX(-6px); opacity: 0; } }
-.shell-col { position: relative; z-index: 1; width: min(560px, 92vw); max-height: 100vh; display: flex; flex-direction: column; align-items: center; gap: 18px; padding: 3vh 0; }
+.shell-col { position: relative; z-index: 1; width: min(560px, 92vw); max-height: 100vh; display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 3vh 0; transition: width .4s cubic-bezier(.3,1.2,.4,1); }
 .shell-col.wide { width: min(800px, 94vw); }
-.shell-logo { width: min(460px, 80vw, 40vh); filter: drop-shadow(0 14px 32px rgba(0,0,0,.65)); animation: logoDrop .5s cubic-bezier(.2,1.45,.4,1) both, float 6s ease-in-out .5s infinite; }
-.shell-logo.small { width: min(300px, 60vw, 24vh); }
+.shell-col.mid { width: min(620px, 94vw); }
+.shell-logo { flex: none; width: min(460px, 80vw, 40vh); filter: drop-shadow(0 14px 32px rgba(0,0,0,.65)); animation: logoDrop .5s cubic-bezier(.2,1.45,.4,1) both, float 6s ease-in-out .5s infinite; transition: width .45s cubic-bezier(.3,1.25,.4,1); }
+.shell-logo.small { width: min(240px, 50vw, 18vh); }
 @keyframes logoDrop { 0% { opacity: 0; transform: translateY(-70px) scale(.7) rotate(-7deg); } 55% { opacity: 1; } 100% { opacity: 1; transform: none; } }
 .enter { animation: fadeUp .32s cubic-bezier(.2,1.25,.4,1) both; animation-delay: calc(.12s + var(--i, 0) * 40ms); }
 @keyframes fadeUp { from { opacity: 0; transform: translateY(20px) scale(.97); } }
@@ -456,3 +457,26 @@ textarea.json { width: 100%; height: 60vh; font-family: monospace; font-size: 12
 .shell .lobby-box { width: 100%; max-height: 92vh; }
 @media (prefers-reduced-motion: reduce) { .shell-bg, .shell-particles, .btn.shine::after { animation: none !important; } .shell-particles { display: none; } }
 @media (max-height: 640px) { .shell-logo { width: min(320px, 60vw, 30vh); } .shell .saves { max-height: 30vh; } }
+
+.shell-screen { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 16px; min-height: 0; animation: screenIn .3s cubic-bezier(.2,1.1,.4,1) both; }
+@keyframes screenIn { from { opacity: 0; transform: translateY(14px); } }
+/* компактная карточка новой партии */
+.setup-card { width: 100%; display: flex; flex-direction: column; gap: 10px; max-height: calc(100vh - min(240px, 50vw, 18vh) - 9vh); }
+.setup-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.setup-head h2 { margin: 0; }
+.setup-head .title-input { min-width: 0; width: 220px; font-size: 13px; }
+.mode-seg { display: flex; }
+.mode-seg button { flex: 1; }
+.mode-hint { margin: 0; }
+.setup-body { overflow: auto; display: flex; flex-direction: column; gap: 6px; padding-right: 4px; min-height: 0; }
+.setup-player { display: flex; gap: 10px; align-items: center; padding: 8px 10px; border-radius: 10px; background: rgba(255,255,255,.04); }
+.setup-player-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.setup-player-main input { width: 150px; }
+.setup-player .color-name { min-width: 0; margin-left: auto; }
+.swatches.sm { gap: 5px; }
+.swatches.sm .swatch { width: 20px; height: 20px; }
+.add-player { align-self: flex-start; }
+.advanced-mini { margin-top: 4px; padding: 8px 10px; border-radius: 10px; background: rgba(0,0,0,.2); }
+.advanced-mini summary { cursor: pointer; color: var(--muted); font-size: 13px; font-weight: 600; }
+.advanced-mini[open] summary { margin-bottom: 6px; color: var(--gold2); }
+.advanced-mini .field.small { grid-template-columns: 1fr 160px; }

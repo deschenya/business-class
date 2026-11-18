@@ -2,7 +2,6 @@ import { useStore, type LobbySeat } from '../store';
 import { PAWN_PALETTE, PawnIcon, colorName, cls } from './helpers';
 import { InviteBox } from './NetPanel';
 import { TutorToggle } from './Tutor';
-import { Shell } from './Shell';
 
 export function LobbyScreen() {
   const { lobby, net, lobbyEdit, lobbyAddLocal, lobbyRemove, lobbyClaim, lobbySit, lobbyStart, leave, setScreen } = useStore();
@@ -19,10 +18,9 @@ export function LobbyScreen() {
   const free = lobby.seats.filter((x) => !x.owner).length;
   const exit = () => { if (!host || confirm('Закрыть комнату? Все подключившиеся будут отключены.')) { leave(); setScreen('menu'); } };
   return (
-    <Shell wide>
+    <>
       <div className="lobby-box glass enter">
         <div className="lobby-head">
-          <img src="art/logo.webp" className="lobby-logo" alt="" />
           <div>
             <h1>{lobby.title}</h1>
             <span className="muted small">{lobby.resume ? 'Продолжение сохранённой партии' : 'Новая партия'} · {host ? 'вы хост — партия сохраняется у вас' : `комната ${net.code}`}</span>
@@ -83,6 +81,6 @@ export function LobbyScreen() {
           )}
         </div>
       </div>
-    </Shell>
+    </>
   );
 }

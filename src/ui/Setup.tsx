@@ -39,71 +39,57 @@ export function SetupScreen() {
     newGame({ title, players, roles, settings });
   };
   return (
-    <div className="screen setup">
-      <header className="screen-head">
-        <button className="btn ghost" onClick={() => setScreen('menu')}>← Меню</button>
-        <h1>Подготовка партии</h1>
-        <input className="title-input" value={title} onChange={(e) => setTitle(e.target.value)} />
-      </header>
-      <div className="setup-grid">
-        <section className="mode-pick wide">
-          <button className={`mode-card glass ${mode === 'local' ? 'on' : ''}`} onClick={() => setMode('local')}>
-            <span className="mode-ico">🖥️</span>
-            <b>На одном устройстве</b>
-            <span className="muted small">Все игроки ходят по очереди за этим экраном. Интернет не нужен.</span>
-          </button>
-          <button className={`mode-card glass ${mode === 'host' ? 'on' : ''}`} onClick={() => setMode('host')}>
-            <span className="mode-ico">🌐</span>
-            <b>Хост — играть по сети</b>
-            <span className="muted small">Вы создаёте комнату, друзья открывают ссылку на своих устройствах и выбирают фишки. Партия хранится у вас.</span>
-            {mode === 'host' && lan && (
-              <span className="seg sm" onClick={(e) => e.stopPropagation()}>
-                <span role="button" className={via === 'p2p' ? 'on' : ''} onClick={() => setVia('p2p')}>Через интернет</span>
-                <span role="button" className={via === 'ws' ? 'on' : ''} onClick={() => setVia('ws')}>В локальной сети</span>
-              </span>
-            )}
-          </button>
-        </section>
-{mode === 'local' ? (
-        <section className="glass card wide">
-          <h2>Игроки <span className="muted">({players.length})</span></h2>
-          <p className="muted small">По правилам — 2–4 игрока; при большем числе добавьте фишки вручную.</p>
-          {players.map((p, i) => (
-            <div key={i} className="player-row">
-              <span className="pawn-preview"><PawnIcon color={p.color} size={44} /></span>
-              <div className="player-main">
-                <div className="row">
-                  <input value={p.name} onChange={(e) => upd(i, { name: e.target.value })} />
-                  <span className="color-name" style={{ color: p.color }}>{colorName(p.color)}</span>
-                  <span className="sex" title="Пол (нужен для карточки «Сюрприз» про даму)"><button className={!p.lady ? 'on' : ''} onClick={() => upd(i, { lady: false })}>М</button><button className={p.lady ? 'on' : ''} onClick={() => upd(i, { lady: true })}>Ж</button></span>
-                  {players.length > 2 && <button className="icon-btn" onClick={() => setPlayers(players.filter((_, j) => j !== i))}>✕</button>}
-                </div>
-                <div className="swatches">
-                  {PAWN_PALETTE.map((c) => {
-                    const taken = players.some((x, j) => j !== i && x.color === c.hex);
-                    return <button key={c.hex} title={taken ? `${c.name} — занят` : c.name} className={`swatch ${p.color === c.hex ? 'on' : ''}`} style={{ ['--sw' as any]: c.hex }} onClick={() => upd(i, { color: c.hex })} disabled={taken} />;
-                  })}
+    <div className="glass card setup-card enter">
+      <div className="setup-head">
+        <h2>Новая партия</h2>
+        <input className="title-input" value={title} onChange={(e) => setTitle(e.target.value)} title="Название партии" />
+      </div>
+      <div className="seg mode-seg">
+        <button className={mode === 'local' ? 'on' : ''} onClick={() => setMode('local')}>🖥️ На одном устройстве</button>
+        <button className={mode === 'host' ? 'on' : ''} onClick={() => setMode('host')}>🌐 По сети (хост)</button>
+      </div>
+      <p className="muted small mode-hint">
+        {mode === 'local' ? 'Все ходят по очереди за этим экраном. Интернет не нужен.' : 'Вы создаёте комнату, друзья открывают ссылку и выбирают свои фишки. Партия хранится у вас.'}
+      </p>
+      <div className="setup-body">
+        {mode === 'local' ? (
+          <>
+            {players.map((p, i) => (
+              <div key={i} className="setup-player">
+                <PawnIcon color={p.color} size={30} />
+                <div className="setup-player-main">
+                  <div className="row">
+                    <input value={p.name} onChange={(e) => upd(i, { name: e.target.value })} />
+                    <span className="sex" title="Пол (нужен для карточки «Сюрприз» про даму)"><button className={!p.lady ? 'on' : ''} onClick={() => upd(i, { lady: false })}>М</button><button className={p.lady ? 'on' : ''} onClick={() => upd(i, { lady: true })}>Ж</button></span>
+                    <span className="color-name" style={{ color: p.color }}>{colorName(p.color)}</span>
+                    {players.length > 2 && <button className="icon-btn" title="Убрать" onClick={() => setPlayers(players.filter((_, j) => j !== i))}>✕</button>}
+                  </div>
+                  <div className="swatches sm">
+                    {PAWN_PALETTE.map((c) => {
+                      const taken = players.some((x, j) => j !== i && x.color === c.hex);
+                      return <button key={c.hex} title={taken ? `${c.name} — занят` : c.name} className={`swatch ${p.color === c.hex ? 'on' : ''}`} style={{ ['--sw' as any]: c.hex }} onClick={() => upd(i, { color: c.hex })} disabled={taken} />;
+                    })}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-          {players.length < 8 && <button className="btn" onClick={add}>+ Добавить фишку</button>}
-        </section>
+            ))}
+            {players.length < 8 && <button className="btn sm add-player" onClick={add}>+ Игрок</button>}
+          </>
         ) : (
-        <section className="glass card wide">
-          <h2>Игроки</h2>
-          <p className="muted small">Игроки соберутся в лобби: каждый, кто откроет вашу ссылку, получит свою фишку и сам выберет имя и цвет. Можно добавить и игроков за этим устройством.</p>
-          <label className="field"><span>Ваше имя</span><input value={hostName} onChange={(e) => setHostName(e.target.value)} placeholder="Хост" /></label>
-        </section>
+          <>
+            <label className="field"><span>Ваше имя</span><input value={hostName} onChange={(e) => setHostName(e.target.value)} placeholder="Хост" /></label>
+            {lan && (
+              <div className="seg sm">
+                <button className={via === 'p2p' ? 'on' : ''} onClick={() => setVia('p2p')}>Через интернет</button>
+                <button className={via === 'ws' ? 'on' : ''} onClick={() => setVia('ws')}>В локальной сети</button>
+              </div>
+            )}
+          </>
         )}
-        <details className="advanced glass">
-          <summary>Дополнительные настройки <span className="muted small">— роли ведущих и стартовые ресурсы (можно не трогать)</span></summary>
-          <div className="advanced-grid">
-        <section>
-          <h2>Роли ведущих</h2>
-          <p className="muted small">Один человек может совмещать роли. «Ведущий» — тот, кто управляет хостом.</p>
+        <details className="advanced-mini">
+          <summary>Дополнительно: роли ведущих и стартовые ресурсы</summary>
           {(Object.keys(ROLE_RU) as RoleId[]).map((r) => (
-            <label key={r} className="field">
+            <label key={r} className="field small">
               <span>{ROLE_RU[r]}</span>
               <select value={mode === 'host' ? 'host' : String(roles[r])} onChange={(e) => setRoles({ ...roles, [r]: e.target.value === 'host' ? 'host' : Number(e.target.value) })}>
                 <option value="host">Ведущий (хост)</option>
@@ -111,19 +97,18 @@ export function SetupScreen() {
               </select>
             </label>
           ))}
-          <h2 style={{ marginTop: 18 }}>Стартовые ресурсы</h2>
-          <label className="field"><span>Деньги</span><input type="number" step={1000} value={money} onChange={(e) => setMoney(Number(e.target.value))} /><em>{fmt(money)}</em></label>
-          <label className="field"><span>Номинал акции</span><input type="number" step={1000} value={quote} onChange={(e) => setQuote(Number(e.target.value))} /><em>{fmt(quote)}</em></label>
-          <label className="field"><span>Акций каждого цвета</span><input type="number" min={0} value={stocks} onChange={(e) => setStocks(Number(e.target.value))} /></label>
-          <label className="check"><input type="checkbox" checked={claim} onChange={(e) => setClaim(e.target.checked)} /> Аренду нужно требовать до броска следующего игрока (по правилам)</label>
-        </section>
-          </div>
+          <label className="field small"><span>Деньги, $</span><input type="number" step={1000} value={money} onChange={(e) => setMoney(Number(e.target.value))} /></label>
+          <label className="field small"><span>Номинал акции, $</span><input type="number" step={1000} value={quote} onChange={(e) => setQuote(Number(e.target.value))} /></label>
+          <label className="field small"><span>Акций каждого цвета</span><input type="number" min={0} value={stocks} onChange={(e) => setStocks(Number(e.target.value))} /></label>
+          <label className="check small"><input type="checkbox" checked={claim} onChange={(e) => setClaim(e.target.checked)} /> Аренду требовать до броска следующего игрока</label>
+          <span className="muted small">Сейчас: {fmt(money)} и по {stocks} акции номиналом {fmt(quote)}</span>
         </details>
       </div>
-      <footer className="setup-foot">
-        <TutorToggle />
-        <button className="btn gold big" onClick={start} disabled={mode === 'local' && players.length < 2}>{mode === 'host' ? 'Создать комнату →' : 'Начать партию →'}</button>
-      </footer>
+      <TutorToggle />
+      <div className="row join-actions">
+        <button className="btn ghost" onClick={() => setScreen('menu')}>← Назад</button>
+        <button className="btn gold shine" onClick={start} disabled={mode === 'local' && players.length < 2}>{mode === 'host' ? 'Создать комнату →' : 'Начать партию →'}</button>
+      </div>
     </div>
   );
 }
