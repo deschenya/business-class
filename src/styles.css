@@ -516,7 +516,7 @@ textarea.json { width: 100%; height: 60vh; font-family: monospace; font-size: 12
 .prompt-options .btn.has-target::before { content: '◎'; margin-right: 6px; opacity: .55; }
 
 button:focus-visible, .btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
-.build-tag { position: fixed; right: 12px; bottom: 8px; font-size: 10.5px; color: rgba(181,167,143,.55); font-variant-numeric: tabular-nums; }
+.build-tag { position: fixed; left: 50%; bottom: 8px; transform: translateX(-50%); z-index: 1; font-size: 10.5px; color: rgba(181,167,143,.35); font-variant-numeric: tabular-nums; pointer-events: none; user-select: none; }
 
 /* требование аренды: крупно и заметно */
 .claim.rent { font-size: 14px; padding: 10px 14px; }

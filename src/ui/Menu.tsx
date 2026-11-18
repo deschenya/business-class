@@ -53,10 +53,11 @@ export function Menu() {
         </section>
       )}
       <div className="menu-links enter" style={stagger(k++)}>
-        <span className="build-tag" title="Версия сборки">сборка {__BUILD__}</span>
         <button className="menu-link" onClick={() => setScreen('rules')}><span>📖</span>Правила и словарь</button>
         <button className="menu-link" onClick={() => setScreen('editor')}><span>🗂️</span>Справочники</button>
       </div>
+      {/* вне анимированных блоков: transform у .enter привязал бы position: fixed к блоку, а не к экрану */}
+      <span className="build-tag" title="Версия сборки">{__BUILD__}</span>
       {net.mode === 'host' && net.status === 'connecting' && (
         <div className="reconnect-back"><div className="reconnect glass"><span className="spinner" /><h3>Открываем комнату {net.code}</h3><p className="muted">{net.error ?? 'Подключаемся к серверу соединения…'}</p><button className="btn ghost" onClick={() => leave()}>Отмена</button></div></div>
       )}
